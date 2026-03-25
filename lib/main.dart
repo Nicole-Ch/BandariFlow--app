@@ -1,3 +1,4 @@
+import 'package:bandariflow/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'views/auth/splash_screen.dart';
 
@@ -18,6 +19,10 @@ class BandariFlowApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D47A1)),
       ),
       home: const SplashScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        
+      },
     );
   }
 }
