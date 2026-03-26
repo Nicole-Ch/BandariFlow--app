@@ -48,8 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     child: Image.asset('assets/images/logo.png',
-                       width: 78,
-                       height: 78,
+                       width: 86,
+                       height: 86,
                        fit: BoxFit.contain,
                        color:Colors.black,
                        colorBlendMode: BlendMode.srcIn,
@@ -148,16 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ), 
                 SizedBox(height: 14),
 
-                Align(
-                  alignment: Alignment.center,
-                  child: TextButton(onPressed: (){}, 
-                  child: Text('Forgot Password?',
-                     style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  )),
-                )   ,
+            
 
                   const SizedBox(height: 14),
                   SizedBox(

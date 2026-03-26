@@ -1,4 +1,5 @@
 import 'package:bandariflow/views/auth/login_screen.dart';
+import 'package:bandariflow/views/auth/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'views/auth/splash_screen.dart';
 
@@ -21,6 +22,7 @@ class BandariFlowApp extends StatelessWidget {
       home: const SplashScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
         
       },
     );
