@@ -8,6 +8,8 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
+  int _selectedIndex = 0; // For Navigation Bar state
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,36 +152,31 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
           Spacer(),
 
-          //BUTTON
+          //BOTTOM NAVIGATION BAR
 
-          Padding(padding: EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(onPressed: (){},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFFD700),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                )
-              ),
-              
-              
-               child: Text('VIEW GATE PASS',
-                 style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-              )),
-            ),
-          )
+          
+
+          
 
 
 
 
         ],
       )),
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF0A2342),
+        unselectedItemColor: Colors.grey,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.document_scanner), label: 'Scan Docs'),
+          BottomNavigationBarItem(icon: Icon(Icons.confirmation_number), label: 'My Tickets'),
+         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
     );
   }
 }
