@@ -255,7 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                        SizedBox(width: 6,),
                       GestureDetector(
                         onTap: (){
-                          Navigator.pushNamed(context, '/login');
+                          Navigator.pushNamed(context, '/home'); //CHANGE LATER
                         },
                         child: Text('Login',
                           style: TextStyle(
