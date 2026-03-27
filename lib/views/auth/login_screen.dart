@@ -9,8 +9,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
 
-   final emailcontroller = TextEditingController();
-   final passwordcontroller = TextEditingController();
+   final emailController = TextEditingController();
+   final passwordController = TextEditingController();
    
    bool obscurePassword = true;
 
@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
-                    controller: emailcontroller,
+                    controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
-                    controller: passwordcontroller,
+                    controller: passwordController,
                     obscureText: obscurePassword,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
