@@ -187,7 +187,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.white),
-                      labelText: 'Password',
+                      labelText: ' Confirm Password',
                       hintText: 'Confirm your password',
                       hintStyle: TextStyle(color: Colors.white70),
                       labelStyle: TextStyle(

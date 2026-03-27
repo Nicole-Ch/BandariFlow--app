@@ -75,108 +75,246 @@ class _DriverDashboardState extends State<DriverDashboard> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+               
                 children: [
                   Row(
+                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                   crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF1D6F4E),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.circle, size: 10, color: Color(0xFF59E38C),),
-                            SizedBox(width: 6,),
-                            Text('LIVE',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12
-                                ),
-                            )
-                          ],
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('CURRENT SLOT STATUS',
+                                              style: TextStyle(
+                          color: Colors.white,
+                          
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                      
+                            SizedBox(height: 4),
+                        Text('Countdown to your active booking window',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            
+                          ),
+                        ),                
+                        ],
+                      ),
+
+                      Transform.translate(
+                        offset: Offset(0, -4),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF1D6F4E),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.circle, size: 10, color: Color(0xFF59E38C),),
+                              SizedBox(width: 6,),
+                              Text('LIVE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12
+                                  ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
+                  
+                  
+                      
 
                     ],
                    
                   ),
 
-                  SizedBox(height: 10),
-
-                  Text('CURRENT SLOT STATUS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  
-                  SizedBox(height: 4),
-                  Text('Countdown to your active booking window',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      
-                    ),
-                  ),
-
-                   SizedBox(height: 18),
-                  Center(
-                    child: Text('01 : 14 : 22',
-                       style: TextStyle(
+                 
+                  const SizedBox(height: 13),
+                  const Center(
+                    child: Text(
+                      '01 : 14 : 22',
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 40,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2
-                       ),
+                        letterSpacing: 1.2,
+                      ),
                     ),
+                  ),
+                                  
+                   SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text('HRS',
+                         style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12
+                         ),
+                      ),
+                      Text('MIN',
+                         style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12
+                         ),
+                      ),
+                      Text('SEC',
+                         style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12
+                         ),
+                      ),
+                    ],
                     
                   ),
                   SizedBox(height: 8),
+                   Divider(color: Colors.white24, height: 1),
+                   SizedBox(height: 14),
 
                   //MAP
-                  Container(
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text('Map Preview'),
-                    ),
+                  Row(
+                   children: [
+                    Expanded(child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF123B73),
+                          ),
+                          child: Icon(Icons.access_time,color: Colors.white,size: 20),
+                        ),
+
+                        SizedBox(width: 10),
+
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Gate Window',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+
+                            SizedBox(height: 2),
+                            Text('14:00 - 15:00',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700
+                              ),
+                            ),
+                          ],
+                        )
+                        ),
+                      ],
+                    )),
+                    SizedBox(width: 10),
+                     const VerticalDivider( //CHECK ON THIS
+                            width: 20,
+                            thickness: 1,
+                            indent: 20,
+                            endIndent: 0,
+                            color: Colors.grey,
+                          ),
+                    Expanded(child: Row(children: [
+                      Container(
+                        width: 36,
+                        height:36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF123B73),
+                        ),           
+                        child: Icon(Icons.local_shipping, color: Colors.white, size: 20),        
+                           ),
+
+                           SizedBox(width: 10),
+                           Expanded(
+                            child: Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                Text('Container',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                                ),
+                                SizedBox(height: 2),
+                                Text('TGBU123456',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                ),
+
+                           ],))
+                    ],))
+                   ],
+                    
                   )
                 ],
               ),
             ),
           
 
-          SizedBox(height: 20),
+          SizedBox(height: 16),
           
           //Yard Capacity
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0,4),
+                )
+              ]
+            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Yard Capacity',
-                 style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                
+                Expanded(
+                  child: Text('Yard Capacity Heatmap',
+                   style: TextStyle(
+                    color: Color(0xFF0A2342),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                  
+                  ),
                 ),
-                SizedBox(height: 10),
 
-                Row(
-                    children: [
-                      _statusDot("Maersk", Colors.green),
-                      _statusDot("MSC", Colors.red),
-                      _statusDot("CMA", Colors.orange),
-                    ],
-                  )
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    shape: BoxShape.circle
+                  ),
+                  child: Icon(Icons.info_outline,
+                   size: 16,
+                   color: Colors.grey,
+                  ),
+                )
+
+               
               ],
             ),
+              
+            
           ),
 
           Spacer(),
