@@ -1,5 +1,7 @@
 import 'package:bandariflow/views/driver/booking_detail.dart';
 import 'package:bandariflow/views/driver/gate_pass_screen.dart';
+import 'package:bandariflow/views/driver/tickets_page.dart';
+import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 class DriverDashboard extends StatefulWidget {
@@ -10,7 +12,7 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
-  int _selectedIndex = 0; // For Navigation Bar state
+ 
   
 
   @override
@@ -681,44 +683,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       )),
           
           //BOTTOM NAVIGATION BAR
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        type: BottomNavigationBarType.fixed,
-        showUnselectedLabels: true,
-        selectedItemColor: const Color(0xFF0A2342),
-        unselectedItemColor: Colors.grey,
-          onTap:
-           (index) {
-            setState(() => _selectedIndex = index);
-
-            if (index==0) {
-              return;
-            }
-
-            /* if (index == 1){
-              Navigator.push(
-                context, MaterialPageRoute(builder: (context) => ScanDocsScreen()));
-            } */
-            if (index == 2){
-              Navigator.push(
-                context, MaterialPageRoute(builder: (context) => MyBookingsPage()));
-            }
-            /* if (index == 3){
-              Navigator.push(
-                context, MaterialPageRoute(builder: (context) => ProfileScreen()));
-            } */
-
-            
-           } ,
-
-
-          items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_outlined), label: 'Scan Docs'),
-          BottomNavigationBarItem(icon: Icon(Icons.confirmation_num_outlined), label: 'My Tickets'),
-         BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        ],
-      ),
+           bottomNavigationBar: const DriverBottomNav(currentIndex: 2),
     );
   }
 }

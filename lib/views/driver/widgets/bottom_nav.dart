@@ -1,0 +1,75 @@
+import 'package:bandariflow/views/driver/profile_page.dart';
+import 'package:bandariflow/views/driver/scan_docs.dart';
+import 'package:bandariflow/views/driver/tickets_page.dart';
+import 'package:flutter/material.dart';
+import '../driver_dashboard.dart';
+
+
+
+
+class DriverBottomNav extends StatelessWidget {
+  final int currentIndex;
+
+  const DriverBottomNav({
+    super.key,
+    required this.currentIndex,
+  });
+
+  void _goToPage(BuildContext context, int index) {
+    if (index == currentIndex) return;
+
+    Widget page;
+
+    switch (index) {
+      case 0:
+        page = const DriverDashboard();
+        break;
+      case 1:
+        page = const ScanDocsPage();
+        break;
+      case 2:
+        page = const MyTicketsPage();
+        break;
+      case 3:
+        page = const ProfilePage();
+        break;
+      default:
+        page = const DriverDashboard();
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: currentIndex,
+      type: BottomNavigationBarType.fixed,
+      showUnselectedLabels: true,
+      selectedItemColor: const Color(0xFF0A2342),
+      unselectedItemColor: Colors.grey,
+      onTap: (index) => _goToPage(context, index),
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.dashboard_outlined),
+          label: 'Dashboard',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.qr_code_scanner_outlined),
+          label: 'Scan Docs',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.confirmation_num_outlined),
+          label: 'My Tickets',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          label: 'Profile',
+        ),
+      ],
+    );
+  }
+}
