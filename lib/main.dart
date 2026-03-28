@@ -1,6 +1,7 @@
 import 'package:bandariflow/views/auth/login_screen.dart';
 import 'package:bandariflow/views/auth/register_screen.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
+import 'package:bandariflow/views/driver/gate_pass_screen.dart';
 import 'package:flutter/material.dart';
 import 'views/auth/splash_screen.dart';
 
@@ -25,6 +26,7 @@ class BandariFlowApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const DriverDashboard(),
+        //'/gatepass': (context) => const GatePassScreen()
         
       },
     );

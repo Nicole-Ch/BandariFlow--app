@@ -1,3 +1,4 @@
+import 'package:bandariflow/views/driver/gate_pass_screen.dart';
 import 'package:flutter/material.dart';
 
 class DriverDashboard extends StatefulWidget {
@@ -629,7 +630,18 @@ class _DriverDashboardState extends State<DriverDashboard> {
               width: double.infinity,
               height: 54,
               child: ElevatedButton(onPressed: (){
-                //go to gate pass
+                   Navigator.push(context, 
+                     MaterialPageRoute(builder: (context) => GatePassScreen(
+                      qrToken: 'YOUR_QR_TOKEN_FROM_BACKEND',
+                      gateName: 'GATE 18 - MAIN ENTRANCE',
+                      scanText: 'Scan at Entrance',
+                      status: 'Verified',
+                      containerNumber: 'TGBU1234567',
+                      timeWindow: '10:00 AM - 12:00 PM',
+                      bookingRef: 'BK-987654',
+                      ),
+                      ),
+                   );
               }, 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFFFD700),
