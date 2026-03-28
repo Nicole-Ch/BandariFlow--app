@@ -1,3 +1,4 @@
+import 'package:bandariflow/views/driver/booking_detail.dart';
 import 'package:bandariflow/views/driver/gate_pass_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -10,13 +11,17 @@ class DriverDashboard extends StatefulWidget {
 
 class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0; // For Navigation Bar state
+  
 
   @override
   Widget build(BuildContext context) {
+
+    
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
 
       body: SafeArea(
+       
         child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -682,7 +687,31 @@ class _DriverDashboardState extends State<DriverDashboard> {
         showUnselectedLabels: true,
         selectedItemColor: const Color(0xFF0A2342),
         unselectedItemColor: Colors.grey,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          onTap:
+           (index) {
+            setState(() => _selectedIndex = index);
+
+            if (index==0) {
+              return;
+            }
+
+            /* if (index == 1){
+              Navigator.push(
+                context, MaterialPageRoute(builder: (context) => ScanDocsScreen()));
+            } */
+            if (index == 2){
+              Navigator.push(
+                context, MaterialPageRoute(builder: (context) => MyBookingsPage()));
+            }
+            /* if (index == 3){
+              Navigator.push(
+                context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+            } */
+
+            
+           } ,
+
+
           items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_outlined), label: 'Scan Docs'),

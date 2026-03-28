@@ -67,21 +67,9 @@ class GatePassScreen extends StatelessWidget {
                         },
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
-                      const SizedBox(width: 4),
+                     Spacer(),
                      Icon(Icons.anchor, color: Colors.white, size: 26,),
-                      const Spacer(),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          color: Color(0xFF0A2342),
-                        ),
-                      ),
+                      
                     ],
                   ),
                 ),
