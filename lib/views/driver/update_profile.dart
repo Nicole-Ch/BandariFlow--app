@@ -19,6 +19,20 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   bool obscurePassword = true;
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      backgroundColor: Color(0xFFF5F7FA),
+      body: SafeArea(child: 
+      SingleChildScrollView(
+        child: Padding(padding: EdgeInsets.all(16),
+         child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28)
+          ),
+         ),
+        ),
+      )),
+    );
   }
 }

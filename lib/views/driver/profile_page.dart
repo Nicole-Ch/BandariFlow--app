@@ -1,3 +1,4 @@
+import 'package:bandariflow/views/driver/update_profile.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
@@ -72,7 +73,7 @@ class ProfilePage extends StatelessWidget {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: (){
-          
+                  MaterialPageRoute(builder: (context) => UpdateProfilePage());
               }, style: ElevatedButton.styleFrom(
               backgroundColor: Color.fromARGB(255, 12, 44, 83),
               foregroundColor: Colors.white,
