@@ -27,11 +27,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
 
               child: Row(
                 children: [
-                  IconButton(onPressed: (){
-                    Navigator.pop(context);
-                  }, icon: Icon(Icons.arrow_back, color: Colors.white,),
-                  
-                  ),
+            
 
                   SizedBox(width: 10),
                   Text('My Tickets',

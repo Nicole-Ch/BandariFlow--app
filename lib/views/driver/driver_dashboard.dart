@@ -683,7 +683,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       )),
           
           //BOTTOM NAVIGATION BAR
-           bottomNavigationBar: const DriverBottomNav(currentIndex: 2),
+           bottomNavigationBar: const DriverBottomNav(currentIndex: 0),
     );
   }
 }
