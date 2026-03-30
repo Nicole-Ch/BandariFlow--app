@@ -1,5 +1,5 @@
 import 'package:bandariflow/views/driver/profile_page.dart';
-import 'package:bandariflow/views/driver/scan_docs.dart';
+import 'package:bandariflow/views/driver/booking_create.dart';
 import 'package:bandariflow/views/driver/tickets_page.dart';
 import 'package:flutter/material.dart';
 import '../driver_dashboard.dart';
@@ -25,7 +25,7 @@ class DriverBottomNav extends StatelessWidget {
         page = const DriverDashboard();
         break;
       case 1:
-        page = const ScanDocsPage();
+        page = BookingCreate();
         break;
       case 2:
         page = const MyTicketsPage();
