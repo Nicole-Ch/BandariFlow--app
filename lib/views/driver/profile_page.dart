@@ -73,7 +73,8 @@ class ProfilePage extends StatelessWidget {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const UpdateProfilePage()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const UpdateProfilePage()),
+                  );
               }, style: ElevatedButton.styleFrom(
               backgroundColor: Color.fromARGB(255, 12, 44, 83),
               foregroundColor: Colors.white,
