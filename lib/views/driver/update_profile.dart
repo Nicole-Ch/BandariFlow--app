@@ -19,12 +19,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   final passwordController = TextEditingController();
 
   bool obscurePassword = true;
-  Uint8List? profileImageBytes;
+  Uint8List? profileImageBytes; // holds the raw binary data (the actual bytes) of the image file
 
 
   Future<void> pickProfileImage() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles( //OPENS FILE EXPLORER
-      type: FileType.image,
+      type: FileType.image, //Tells the phone to only show pictures
       withData: true,
     );
 
