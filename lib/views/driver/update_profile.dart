@@ -47,7 +47,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                       color: Color(0xFFBFD6F6),
                       width: 3,
                     ),
-                    image: DecorationImage(image: AssetImage('assets/image/profile.jpg'),
+                    image: DecorationImage(image: AssetImage('assets/images/profile.jpg'),
                      fit: BoxFit.cover,
                     ),
                   ),
