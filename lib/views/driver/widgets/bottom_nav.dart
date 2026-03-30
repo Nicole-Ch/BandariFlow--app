@@ -58,8 +58,8 @@ class DriverBottomNav extends StatelessWidget {
           label: 'Dashboard',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.qr_code_scanner_outlined),
-          label: 'Scan Docs',
+          icon: Icon(Icons.add_circle_outline),
+          label: 'Book',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.confirmation_num_outlined),
