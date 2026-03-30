@@ -9,12 +9,12 @@ class UpdateProfilePage extends StatefulWidget {
 
 class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
-  final fullNameController = TextEditingController(text: 'Jacob');
-  final phoneController = TextEditingController(text: '+254 700963017');
-  final emailController = TextEditingController(text: 'jacobdriver@gmail.com');
-  final truckController = TextEditingController(text: 'KBX 123Z');
-  final licenseController = TextEditingController(text: 'A12345678');
-  final passwordController = TextEditingController(text: 'password123');
+  final fullNameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
+  final truckController = TextEditingController();
+  final licenseController = TextEditingController();
+  final passwordController = TextEditingController();
 
   bool obscurePassword = true;
   @override
@@ -76,7 +76,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
-            )
+            ),
                
              
                
