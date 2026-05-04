@@ -46,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       shape: BoxShape.circle,
                       color: Colors.white,
                       border: Border.all(
-                        color: Color(0xFFEAF3F),
+                        color: Color(0x0ffeaf3f),
                         width: 2,
                       ),
                     ),

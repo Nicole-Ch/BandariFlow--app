@@ -1,6 +1,4 @@
-import 'package:bandariflow/views/driver/booking_detail.dart';
 import 'package:bandariflow/views/driver/gate_pass_screen.dart';
-import 'package:bandariflow/views/driver/tickets_page.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
@@ -689,6 +687,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
 }
 
 
+// ignore: unused_element
 Widget _statusDot(String label, Color color){
   return Padding(padding: EdgeInsets.only(right: 12),
   child: Row(
