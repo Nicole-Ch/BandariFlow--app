@@ -64,8 +64,8 @@ class _BookingCreateState extends State<BookingCreate> {
                         borderRadius: BorderRadius.circular(14),
                         child: Image.asset(
                           'assets/images/Truck.jpg',
-                          width: 150,
-                          height: 90,
+                          width: 120,
+                          height: 80,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -80,6 +80,9 @@ class _BookingCreateState extends State<BookingCreate> {
                               backgroundColor: Color(0xFF2F6FD6),
                               foregroundColor: Colors.white,
                               elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -87,13 +90,17 @@ class _BookingCreateState extends State<BookingCreate> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.upload_file_outlined, size: 26),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Upload Documents',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                Icon(Icons.upload_file_outlined, size: 22),
+                                SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Upload Docs',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+
+                                    maxLines: 1,
                                   ),
                                 ),
                               ],
@@ -288,6 +295,7 @@ class _BookingCreateState extends State<BookingCreate> {
                 ),
 
                 SizedBox(height: 14),
+                //PICKUP DATE
                 Row(
                   children: [
                     Expanded(
@@ -323,7 +331,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'pickup Date',
+                                    'Pickup Date',
                                     style: TextStyle(
                                       color: Color(0xFF0A2342),
                                       fontSize: 16,
@@ -355,7 +363,305 @@ class _BookingCreateState extends State<BookingCreate> {
                         ),
                       ),
                     ),
+                    SizedBox(width: 12),
+                    //DELIVERY DATE
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF8FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Color(0xFFE1E7F0)),
+                        ),
+
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF8FAFD),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Color(0xFFE1E7F0)),
+                              ),
+                              child: Icon(
+                                Icons.calendar_month,
+                                color: Color(0xFF2F6FD6),
+                                size: 20,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Delivery Date',
+                                    style: TextStyle(
+                                      color: Color(0xFF0A2342),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  TextField(
+                                    controller: deliveryDateController,
+                                    readOnly: true,
+                                    style: TextStyle(
+                                      color: Color(0xFF0A2342),
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      hintText: 'Select date',
+                                      hintStyle: TextStyle(
+                                        color: Colors.black38,
+                                      ),
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
+                ),
+
+                SizedBox(height: 14),
+                //CARGO TYPE
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF8FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Color(0xFFE1E7F0)),
+                        ),
+
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF8FAFD),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Color(0xFFE1E7F0)),
+                              ),
+                              child: Icon(
+                                Icons.inventory_2,
+                                color: Color(0xFF2F6FD6),
+                                size: 20,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Cargo Type',
+                                    style: TextStyle(
+                                      color: Color(0xFF0A2342),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  TextField(
+                                    controller: cargoTypeController,
+                                    readOnly: true,
+                                    style: TextStyle(
+                                      color: Color(0xFF0A2342),
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      hintText: 'Enter cargo description',
+                                      hintStyle: TextStyle(
+                                        color: Colors.black38,
+                                      ),
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    //CARGO TYPE
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF8FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Color(0xFFE1E7F0)),
+                        ),
+
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF8FAFD),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Color(0xFFE1E7F0)),
+                              ),
+                              child: Icon(
+                                Icons.scale,
+                                color: Color(0xFF2F6FD6),
+                                size: 20,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Cargo Weight',
+                                    style: TextStyle(
+                                      color: Color(0xFF0A2342),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  TextField(
+                                    controller: deliveryDateController,
+                                    readOnly: true,
+                                    style: TextStyle(
+                                      color: Color(0xFF0A2342),
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      hintText: 'Enter Weight (kg)',
+                                      hintStyle: TextStyle(
+                                        color: Colors.black38,
+                                      ),
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 14),
+
+                Container(
+                  padding: EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF8FAFD),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Color(0xFFE1E7F0)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF0F4FA),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Color(0xFFE1E7F0)),
+                        ),
+                        child: Icon(
+                          Icons.notes_rounded,
+                          color: Color(0xFF2F6FD6),
+                          size: 20,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              'Special Instructions',
+                              style: TextStyle(
+                                color: Color(0xFF0A2342),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Color(0xFFE1E7F0)),
+                              ),
+                              child: TextField(
+                                controller: specialInstructionsController,
+                                maxLines: 5,
+                                style: TextStyle(
+                                  color: Color(0xFF0A2342),
+                                  fontSize: 15,
+                                ),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: 'Enter any special instructions',
+                                  hintStyle: TextStyle(color: Colors.black38),
+                                  contentPadding: EdgeInsets.all(14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 13),
+                SizedBox(
+                  width: double.infinity,
+                  height: 49,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF2F6FD6),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Submit Booking',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
