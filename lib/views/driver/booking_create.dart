@@ -1,3 +1,4 @@
+import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
@@ -26,9 +27,19 @@ class _BookingCreateState extends State<BookingCreate> {
       appBar: AppBar(
         title: Text('Create Booking'),
         centerTitle: true,
-        backgroundColor: Color(0xFF0D3B8E),
+        backgroundColor: Color(0xFF0A2342),
         foregroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DriverDashboard()),
+            );
+          },
+        ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
 
