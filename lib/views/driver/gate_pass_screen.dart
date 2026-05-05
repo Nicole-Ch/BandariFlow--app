@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-
-
 class GatePassScreen extends StatelessWidget {
-
   final String qrToken;
   final String gateName;
   final String scanText;
@@ -15,34 +12,37 @@ class GatePassScreen extends StatelessWidget {
 
   const GatePassScreen({
     super.key,
-    required this.qrToken, required this.gateName, required this.scanText, required this.status, required this.containerNumber, required this.timeWindow, required this.bookingRef,
+    required this.qrToken,
+    required this.gateName,
+    required this.scanText,
+    required this.status,
+    required this.containerNumber,
+    required this.timeWindow,
+    required this.bookingRef,
   });
-  
 
   @override
   Widget build(BuildContext context) {
-
     Color statusColor;
     Color statusBg;
 
     switch (status.toLowerCase()) {
       case 'verified':
-         statusColor = Color(0xFF1B8F3A);
-         statusBg = Color(0xFFE7F8EC);
-         break;
+        statusColor = Color(0xFF1B8F3A);
+        statusBg = Color(0xFFE7F8EC);
+        break;
 
       case 'rejected':
-         statusColor = Color(0xFFB7791F);
-         statusBg = Color.fromARGB(255, 190, 40, 10);
-            
-        
+        statusColor = Color(0xFFB7791F);
+        statusBg = Color.fromARGB(255, 190, 40, 10);
+
         break;
 
       default:
-       statusColor = Color(0xFFB7791f);
-       statusBg = Color(0xFFFFF3D9);
+        statusColor = Color(0xFFB7791f);
+        statusBg = Color(0xFFFFF3D9);
     }
-    
+
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
       body: SafeArea(
@@ -51,10 +51,12 @@ class GatePassScreen extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-
                 //TOB BAR
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0A2342),
                     borderRadius: BorderRadius.circular(18),
@@ -67,9 +69,8 @@ class GatePassScreen extends StatelessWidget {
                         },
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
-                     Spacer(),
-                     Icon(Icons.anchor, color: Colors.white, size: 26,),
-                      
+                      Spacer(),
+                      Icon(Icons.anchor, color: Colors.white, size: 26),
                     ],
                   ),
                 ),
@@ -86,7 +87,7 @@ class GatePassScreen extends StatelessWidget {
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 10,
-                        offset: Offset(0,4)
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
@@ -94,7 +95,8 @@ class GatePassScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('GATE PASS',
+                      Text(
+                        'GATE PASS',
                         style: TextStyle(
                           color: Color(0xFFFFD700),
                           fontSize: 14,
@@ -104,7 +106,8 @@ class GatePassScreen extends StatelessWidget {
                       ),
 
                       SizedBox(height: 8),
-                      Text(gateName,
+                      Text(
+                        gateName,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -113,13 +116,9 @@ class GatePassScreen extends StatelessWidget {
                       ),
 
                       SizedBox(height: 6),
-                      Text(scanText,
-                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15,
-
-                       ),
-                      
+                      Text(
+                        scanText,
+                        style: TextStyle(color: Colors.white70, fontSize: 15),
                       ),
                     ],
                   ),
@@ -133,11 +132,13 @@ class GatePassScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow:[ BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0,4),
-                    )]
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: Column(
@@ -151,7 +152,7 @@ class GatePassScreen extends StatelessWidget {
                             BoxShadow(
                               color: Colors.black12,
                               blurRadius: 6,
-                              offset: Offset(0,2),
+                              offset: Offset(0, 2),
                             ),
                           ],
                         ),
@@ -161,15 +162,17 @@ class GatePassScreen extends StatelessWidget {
                           version: QrVersions.auto,
                           size: 200,
                           backgroundColor: Colors.white,
-                          
-                          ),
+                        ),
                       ),
 
                       SizedBox(height: 18),
 
                       //VERIFIED / REJECTED
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 18, vertical:10),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: statusBg,
                           borderRadius: BorderRadius.circular(30),
@@ -179,116 +182,115 @@ class GatePassScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              status.toLowerCase() == 'rejected'? Icons.close_rounded : Icons.check_circle,
+                              status.toLowerCase() == 'rejected'
+                                  ? Icons.close_rounded
+                                  : Icons.check_circle,
                               color: statusColor,
                               size: 24,
-                              ),
+                            ),
 
-                              SizedBox(width: 8),
+                            SizedBox(width: 8),
 
-                              Text(status,
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                            Text(
+                              status,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
                               ),
+                            ),
                           ],
                         ),
-
-                        
                       ),
 
                       SizedBox(height: 18),
                       Divider(height: 1),
                       SizedBox(height: 14),
-                      
 
                       Row(
-                        
                         children: [
-                          
                           SizedBox(width: 10),
                           Expanded(
                             child: Row(
-                              
                               children: [
-                                Icon(Icons.access_time, color: Color(0xFF0A2342)),
+                                Icon(
+                                  Icons.access_time,
+                                  color: Color(0xFF0A2342),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Time Window:',
+                                        style: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        '10:00 AM - 12:00 PM',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          Container(height: 32, width: 1, color: Colors.grey),
+
+                          SizedBox(width: 15),
+
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.confirmation_num_outlined,
+                                  color: Color(0xFF0A2342),
+                                ),
+                                SizedBox(width: 9),
                                 Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Time Window:',
+                                    Text(
+                                      'Booking Ref',
                                       style: TextStyle(
                                         color: Colors.black54,
-                                        fontSize: 12,
+                                        fontSize: 14,
                                       ),
                                     ),
+
                                     SizedBox(height: 2),
-                                    Text('10:00 AM - 12:00 PM',
+                                    Text(
+                                      bookingRef,
                                       style: TextStyle(
+                                        color: Color(0xFF0A2342),
                                         fontSize: 16,
-                                        fontWeight: FontWeight.w700
+                                        fontWeight: FontWeight.w700,
                                       ),
-                                    )
+                                    ),
                                   ],
                                 ),
                               ],
                             ),
                           ),
-                           
-                            Container(
-                              height: 32, 
-                              width: 1,
-                              color: Colors.grey,
-                        ),
-                       
-                       SizedBox(width: 15),
-
-                       
-
-                        Expanded(
-                          child: Row(
-                           
-                            children: [
-                              Icon(Icons.confirmation_num_outlined, color: Color(0xFF0A2342)),
-                              SizedBox(width: 9),
-                              Column(
-                               
-                                children: [
-                                  Text('Booking Ref',
-                                    style: TextStyle(
-                                      color: Colors.black54,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                              
-                                  SizedBox(height: 2),
-                              Text(bookingRef,
-                               style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                               ),
-                              )
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                          
-                            
-
                         ],
-                      )
+                      ),
                     ],
                   ),
-
-                )
+                ),
               ],
             ),
           ),
-        )),
+        ),
+      ),
     );
   }
 }
