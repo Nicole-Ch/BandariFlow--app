@@ -557,7 +557,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                   ),
                                   SizedBox(height: 3),
                                   TextField(
-                                    controller: deliveryDateController,
+                                    controller: cargoWeightController,
                                     readOnly: true,
                                     style: TextStyle(
                                       color: Color(0xFF0A2342),
