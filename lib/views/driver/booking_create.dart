@@ -1,6 +1,7 @@
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
+import 'package:bandariflow/services/api_service.dart';
 
 class BookingCreate extends StatefulWidget {
   const BookingCreate({super.key});
@@ -656,7 +657,7 @@ class _BookingCreateState extends State<BookingCreate> {
                   width: double.infinity,
                   height: 49,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: submitBooking,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF2F6FD6),
                       foregroundColor: Colors.white,
@@ -682,5 +683,30 @@ class _BookingCreateState extends State<BookingCreate> {
 
       bottomNavigationBar: const DriverBottomNav(currentIndex: 1),
     );
+  }
+
+  Future<void> submitBooking() async {
+    try {
+      final result = await ApiService.createBooking(
+        slotId: 1, // replace with selected slot
+        truckId: 1, // replace with selected truck
+        shippingLineId: 1, // replace with selected shipping line
+        containerNumber: shipperNameController.text.trim(),
+        isEmpty: false,
+        direction: 'import_pickup',
+        manifestNumber: cargoTypeController.text.trim(),
+        yardCapacityId: 1, // replace with selected yard capacity
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking created successfully')),
+      );
+
+      print(result);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 }
