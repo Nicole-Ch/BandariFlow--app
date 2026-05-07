@@ -8,7 +8,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -19,70 +18,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool agreeTerms = false;
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-       body: Container(
+    return Scaffold(
+      body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0C56B0),
-              Color(0xFF2D7DDA),
-              Color(0xFF66B7F3),
-            ],
-          
+            colors: [Color(0xFF0C56B0), Color(0xFF2D7DDA), Color(0xFF66B7F3)],
           ),
         ),
-           
-           child: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(
-                        color: Color(0x0ffeaf3f),
-                        width: 2,
-                      ),
-                    ),
-                    child: Image.asset('assets/images/logo.png',
-                       width: 86,
-                       height: 86,
-                       fit: BoxFit.contain,
-                       color:Colors.black,
-                       colorBlendMode: BlendMode.srcIn,
-                    ),
 
-                    
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Color(0x0ffeaf3f), width: 2),
                   ),
-                  SizedBox(height: 10),
-
-                  Text('Create Account',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color:Colors.white
-                    ),
-                  
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 86,
+                    height: 86,
+                    fit: BoxFit.contain,
+                    color: Colors.black,
+                    colorBlendMode: BlendMode.srcIn,
                   ),
+                ),
+                SizedBox(height: 10),
 
-                  SizedBox(height: 8),
-                  Text('Sign up to get started',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white
-                    ),
-                  
+                Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
-                  SizedBox(height: 20),
-                 
+                ),
 
-                 
+                SizedBox(height: 8),
+                Text(
+                  'Sign up to get started',
+                  style: TextStyle(fontSize: 15, color: Colors.white),
+                ),
+                SizedBox(height: 20),
+
                 Container(
                   height: 56,
                   decoration: BoxDecoration(
@@ -91,19 +76,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: TextField(
                     controller: fullNameController,
-                    
+
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      prefixIcon: Icon(Icons.person_outline, color: Colors.white),
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                      ),
                       labelText: 'FullName',
                       hintText: 'Enter your Full name',
                       hintStyle: TextStyle(color: Colors.white70),
                       labelStyle: TextStyle(
-                        color:Colors.white,
-                        fontWeight: FontWeight.w700
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                       ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 18)
+                      contentPadding: EdgeInsets.symmetric(vertical: 18),
                     ),
                   ),
                 ),
@@ -127,16 +115,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'Enter your email',
                       hintStyle: TextStyle(color: Colors.white70),
                       labelStyle: TextStyle(
-                        color:Colors.white,
-                        fontWeight: FontWeight.w700
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                       ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 18)
+                      contentPadding: EdgeInsets.symmetric(vertical: 18),
                     ),
                   ),
                 ),
 
                 SizedBox(height: 18),
-                
+
                 Container(
                   height: 56,
                   decoration: BoxDecoration(
@@ -155,24 +143,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'Enter your password',
                       hintStyle: TextStyle(color: Colors.white70),
                       labelStyle: TextStyle(
-                        color:Colors.white,
-                        fontWeight: FontWeight.w700
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                       ),
                       contentPadding: EdgeInsets.symmetric(vertical: 18),
-                      suffixIcon: IconButton(onPressed: (){
-                        setState(() {
-                          obscurePassword = !obscurePassword;
-                        });
-                      }, icon: Icon(
-                        obscurePassword ? Icons.visibility : Icons.visibility_off,
-                        color:Colors.white,
-                      ))
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),
 
                 SizedBox(height: 18),
-                
 
                 Container(
                   height: 56,
@@ -191,87 +183,87 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'Confirm your password',
                       hintStyle: TextStyle(color: Colors.white70),
                       labelStyle: TextStyle(
-                        color:Colors.white,
+                        color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
                       contentPadding: EdgeInsets.symmetric(vertical: 18),
 
-                       suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              obscurePassword = !obscurePassword;
-                            });
-                          }, icon: Icon(
-                            obscurePassword? Icons.visibility: Icons.visibility_off, 
-                             color: Colors.white,),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                  
                 ),
-
-
-
-                ), 
                 SizedBox(height: 14),
 
-              
-
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child:ElevatedButton(
-                      onPressed: (){}, 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF145FCC),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        )
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF145FCC),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                    child: Text('Sign up',
-                     style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                    ))
-                  ),
-
-                  SizedBox(height: 5),
-
-                    const Divider(
-                    color: Colors.white54,
-                    thickness: 1,
-                  ),
-                  
-                  const SizedBox(height: 5),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Already have an account?",
-                        style:TextStyle(color: Colors.white),
+                    ),
+                    child: Text(
+                      'Sign up',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
                       ),
-                       SizedBox(width: 6,),
-                      GestureDetector(
-                        onTap: (){
-                          Navigator.pushNamed(context, '/home'); //CHANGE LATER
-                        },
-                        child: Text('Login',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.white,
-                          ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 5),
+
+                const Divider(color: Colors.white54, thickness: 1),
+
+                const SizedBox(height: 5),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Already have an account?",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/login'); //CHANGE LATER
+                      },
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.white,
                         ),
-                      )
-                    ],
-                  )
-                ],
-              ),
-            )),
-       ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

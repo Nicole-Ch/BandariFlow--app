@@ -27,12 +27,11 @@ class BandariFlowApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const DriverDashboard(),
-        
-        '/gatepass': (context) =>  MyTicketsPage(),
+        '/dashboard': (context) => const DriverDashboard(),
+
+        '/gatepass': (context) => MyTicketsPage(),
         '/profile': (context) => ProfilePage(),
-        '/updateprofile' : (context) => UpdateProfilePage(),
-        
+        '/updateprofile': (context) => UpdateProfilePage(),
       },
     );
   }
