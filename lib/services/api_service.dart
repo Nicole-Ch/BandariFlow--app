@@ -70,13 +70,13 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> login({
-    required String username,
+    required String email,
     required String password,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/token/'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
+      body: jsonEncode({'email': email, 'password': password}),
     );
 
     if (response.statusCode == 200) {
