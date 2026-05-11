@@ -1,3 +1,5 @@
+import 'package:bandariflow/services/api_service.dart';
+import 'package:bandariflow/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -16,12 +18,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
   bool agreeTerms = false;
+
+  Future<void> registerUser() async {
+    try {
+      final result = await ApiService.register(
+        fullName: fullNameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        confirmPassword: confirmPasswordController.text.trim(),
+      );
+
+      print('REGISTER SUCCESS: $result');
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      print('REGISTER ERROR: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        height: double.infinity,
+
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -32,6 +60,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         child: SafeArea(
           child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              left: 16,
+              right: 16,
+            ),
             child: Column(
               children: [
                 const SizedBox(height: 10),
@@ -69,7 +102,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(height: 20),
 
                 Container(
-                  height: 56,
                   decoration: BoxDecoration(
                     color: Color(0xFF5D96E4),
                     borderRadius: BorderRadius.circular(10),
@@ -99,7 +131,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(height: 18),
 
                 Container(
-                  height: 56,
                   decoration: BoxDecoration(
                     color: Color(0xFF5D96E4),
                     borderRadius: BorderRadius.circular(10),
@@ -126,7 +157,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(height: 18),
 
                 Container(
-                  height: 56,
                   decoration: BoxDecoration(
                     color: Color(0xFF5D96E4),
                     borderRadius: BorderRadius.circular(10),
@@ -134,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: TextField(
                     controller: passwordController,
                     obscureText: obscurePassword,
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.text,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -167,14 +197,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(height: 18),
 
                 Container(
-                  height: 56,
                   decoration: BoxDecoration(
                     color: Color(0xFF5D96E4),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
                     controller: confirmPasswordController,
-                    obscureText: obscurePassword,
+                    obscureText: obscureConfirmPassword,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -191,11 +220,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
-                            obscurePassword = !obscurePassword;
+                            obscureConfirmPassword = !obscureConfirmPassword;
                           });
                         },
                         icon: Icon(
-                          obscurePassword
+                          obscureConfirmPassword
                               ? Icons.visibility
                               : Icons.visibility_off,
                           color: Colors.white,
@@ -211,7 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: registerUser,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF145FCC),
                       foregroundColor: Colors.white,

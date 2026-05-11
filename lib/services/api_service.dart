@@ -87,4 +87,28 @@ class ApiService {
       throw Exception('Login failed: ${response.body}');
     }
   }
+
+  static Future<Map<String, dynamic>> register({
+    required String fullName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/register/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'full_name': fullName,
+        'email': email,
+        'password': password,
+        'confirm_password': confirmPassword,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Register failed: ${response.body}');
+    }
+  }
 }
