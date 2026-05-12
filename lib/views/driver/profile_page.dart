@@ -1,9 +1,43 @@
+import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/driver/update_profile.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  Map<String, dynamic>? profile;
+  bool loading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    loadProfile();
+  }
+
+  Future<void> loadProfile() async {
+    try {
+      final data = await ApiService.getDriverProfile();
+      print("DEBUG PROFILE DATA: $data");
+      if (!mounted) return;
+      setState(() {
+        profile = data;
+        loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        error = e.toString();
+        loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,38 +71,54 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
 
+              // Look for where you display the profile image
               SizedBox(
                 width: 120,
                 height: 120,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(100),
-                  child: Image.asset(
-                    'assets/images/profile.jpg',
-                    height: 120,
-                    width: 120,
-                  ),
+                  child: profile?['photo'] != null
+                      ? Image.network(
+                          profile!['photo'], // The URL from Django
+                          height: 120,
+                          width: 120,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'assets/images/profile.jpg', // Fallback if no photo exists
+                          height: 120,
+                          width: 120,
+                        ),
                 ),
               ),
 
               SizedBox(height: 10),
               Text(
-                'Jacob',
+                profile?['fullname'] ?? 'Driver Name',
                 style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
               ),
               Text(
-                'jacobdriver@gmail.com',
+                profile?['user_email'] ?? '',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              Text(
+                profile?['preferred_truck'] ?? 'No truck assigned',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
 
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  final updated = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const UpdateProfilePage(),
+                      builder: (context) =>
+                          UpdateProfilePage(profile: profile!),
                     ),
                   );
+                  if (updated == true) {
+                    loadProfile();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 12, 44, 83),
@@ -103,7 +153,7 @@ class ProfilePage extends StatelessWidget {
                     _profileItem(
                       icon: Icons.phone_android_outlined,
                       title: 'Phone',
-                      value: '+254 700963017',
+                      value: profile?['phone'] ?? '',
                     ),
 
                     SizedBox(height: 10),
@@ -113,7 +163,7 @@ class ProfilePage extends StatelessWidget {
                     _profileItem(
                       icon: Icons.mail_outline,
                       title: 'Email',
-                      value: 'jacobdriver@gmail.com',
+                      value: profile?['user_email'] ?? '',
                     ),
 
                     SizedBox(height: 10),
@@ -123,7 +173,7 @@ class ProfilePage extends StatelessWidget {
                     _profileItem(
                       icon: Icons.local_shipping_outlined,
                       title: 'Truck',
-                      value: 'KBX 123Z',
+                      value: profile?['preferred_truck']?.toString() ?? '',
                     ),
 
                     SizedBox(height: 10),

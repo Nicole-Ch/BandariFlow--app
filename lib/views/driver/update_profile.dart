@@ -1,34 +1,90 @@
+import 'package:bandariflow/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
 class UpdateProfilePage extends StatefulWidget {
-  const UpdateProfilePage({super.key});
+  final Map<String, dynamic> profile;
+  const UpdateProfilePage({super.key, required this.profile});
 
   @override
   State<UpdateProfilePage> createState() => _UpdateProfilePageState();
 }
 
 class _UpdateProfilePageState extends State<UpdateProfilePage> {
-
-  final fullNameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final emailController = TextEditingController();
-  final truckController = TextEditingController();
-  
-  final passwordController = TextEditingController();
+  late final TextEditingController fullNameController;
+  late final TextEditingController phoneController;
+  late final TextEditingController emailController;
+  late final TextEditingController truckController;
+  late final TextEditingController passwordController;
+  late final TextEditingController idNumberController;
+  late final TextEditingController licenseController;
 
   bool obscurePassword = true;
-  Uint8List? profileImageBytes; // holds the raw binary data (the actual bytes) of the image file
+  Uint8List?
+  profileImageBytes; // holds the raw binary data (the actual bytes) of the image file
 
+  @override
+  void initState() {
+    super.initState();
+    fullNameController = TextEditingController(
+      text: widget.profile['fullname'] ?? '',
+    );
+    phoneController = TextEditingController(
+      text: widget.profile['phone'] ?? '',
+    );
+    emailController = TextEditingController(
+      text: widget.profile['user_email'] ?? '',
+    );
+    truckController = TextEditingController(text: '');
+    passwordController = TextEditingController(text: '');
+    idNumberController = TextEditingController(
+      text: widget.profile['id_number'] ?? '',
+    );
+    licenseController = TextEditingController(
+      text: widget.profile['license_number'] ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    fullNameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    truckController.dispose();
+    passwordController.dispose();
+    idNumberController.dispose();
+    licenseController.dispose();
+    super.dispose();
+  }
+
+  Future<void> saveProfile() async {
+    try {
+      await ApiService.updateDriverProfile(
+        fullName: fullNameController.text.trim(),
+        phone: phoneController.text.trim(),
+        idNumber: idNumberController.text.trim(),
+        licenseNumber: licenseController.text.trim(),
+        truckPlate: truckController.text.trim(),
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
 
   Future<void> pickProfileImage() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles( //OPENS FILE EXPLORER
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      //OPENS FILE EXPLORER
       type: FileType.image, //Tells the phone to only show pictures
       withData: true,
     );
 
-    if(result !=null && result.files.single.bytes !=null){
+    if (result != null && result.files.single.bytes != null) {
       setState(() {
         profileImageBytes = result.files.single.bytes;
       });
@@ -39,8 +95,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
-       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      appBar: AppBar(
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -48,13 +107,13 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      
+
       body: SingleChildScrollView(
-         child: Padding(
-           padding: const EdgeInsets.all(8.0),
-           child: Column(
-             children: [
-              SizedBox(height: 5,),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              SizedBox(height: 5),
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
@@ -63,23 +122,22 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                     height: 120,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Color(0xFFBFD6F6),
-                        width: 3,
-                      ),
-                      
+                      border: Border.all(color: Color(0xFFBFD6F6), width: 3),
                     ),
                     child: ClipOval(
-                      child: profileImageBytes != null ?
-                      Image.memory(profileImageBytes!,
-                                   fit: BoxFit.cover,
-                                   width: 120,
-                                   height: 120,
-                      ): Image.asset('assets/images/profile.jpg',
-                         fit: BoxFit.cover,
-                         width: 120,
-                         height: 120,
-                      ),
+                      child: profileImageBytes != null
+                          ? Image.memory(
+                              profileImageBytes!,
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            )
+                          : Image.asset(
+                              'assets/images/profile.jpg',
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            ),
                     ),
                   ),
 
@@ -92,395 +150,377 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                         shape: BoxShape.circle,
                         color: Color(0xFF2F6FD6),
                       ),
-                      child: Icon(Icons.camera_alt,
-                             color: Colors.white,
-                             size: 18,
+                      child: Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
+                        size: 18,
                       ),
                     ),
                   ),
-           
-                 
                 ],
               ),
-           
+
               SizedBox(height: 10),
-           
-              Text('Edit',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+
+              Text(
+                'Edit',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              ),
-           
+
               SizedBox(height: 18),
-           
+
               // UPDATE FIELDS
-              
-                  Container(
-                    padding: EdgeInsets.all(14),
-                    
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF8FAFD),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE1E7F0)),
+              Container(
+                padding: EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Color(0xFFE1E7F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF1FB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.person_outline,
+                        color: Color(0xFF0A2342),
+                        size: 22,
+                      ),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFEAF1FB),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.person_outline, 
-                            color: Color(0xFF0A2342),
-                            size: 22,
-                          ),
-
-                          
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                               Text('FullName',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                               ),
-                               SizedBox(height: 7),
-                               TextField(
-                                controller: fullNameController,
-                                style: TextStyle(
-                                  color: Color(0xFF0A2342)
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                     borderRadius: BorderRadius.circular(12),
-                                     borderSide: BorderSide(
-                                      color: Color(0xFFE1E7F0),
-                                     ),
-                                  ),
-                                  
-                                ),
-                               )
-                          ],
-                        ))
-                      ],
-                    )
-                  ),
-           
-                  SizedBox(height: 15),
-
-                  Container(
-                    padding: EdgeInsets.all(14),
-                    
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF8FAFD),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE1E7F0)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFEAF1FB),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.phone_outlined, 
-                            color: Color(0xFF0A2342),
-                            size: 22,
-                          ),
-
-                          
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                               Text('Phone',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                               ),
-                               SizedBox(height: 7),
-                               TextField(
-                                controller: phoneController,
-                                style: TextStyle(
-                                  color: Color(0xFF0A2342)
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                     borderRadius: BorderRadius.circular(12),
-                                     borderSide: BorderSide(
-                                      color: Color(0xFFE1E7F0),
-                                     ),
-                                  ),
-                                  
-                                ),
-                               )
-                          ],
-                        ))
-                      ],
-                    )
-                  ),
-           
-                  SizedBox(height: 15),
-                  Container(
-                    padding: EdgeInsets.all(14),
-                    
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF8FAFD),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE1E7F0)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFEAF1FB),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.email, 
-                            color: Color(0xFF0A2342),
-                            size: 22,
-                          ),
-
-                          
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                               Text('Email',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                               ),
-                               SizedBox(height: 7),
-                               TextField(
-                                controller: emailController,
-                                style: TextStyle(
-                                  color: Color(0xFF0A2342)
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                     borderRadius: BorderRadius.circular(12),
-                                     borderSide: BorderSide(
-                                      color: Color(0xFFE1E7F0),
-                                     ),
-                                  ),
-                                  
-                                ),
-                               )
-                          ],
-                        ))
-                      ],
-                    )
-                  ),
-           
-                  SizedBox(height: 15),
-                  Container(
-                    padding: EdgeInsets.all(14),
-                    
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF8FAFD),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE1E7F0)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFEAF1FB),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.local_shipping_rounded, 
-                            color: Color(0xFF0A2342),
-                            size: 22,
-                          ),
-
-                          
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                               Text('Truck Number',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                               ),
-                               SizedBox(height: 7),
-                               TextField(
-                                controller: truckController,
-                                style: TextStyle(
-                                  color: Color(0xFF0A2342)
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                     borderRadius: BorderRadius.circular(12),
-                                     borderSide: BorderSide(
-                                      color: Color(0xFFE1E7F0),
-                                     ),
-                                  ),
-                                  
-                                ),
-                               )
-                          ],
-                        ))
-                      ],
-                    )
-                  ),
-           
-                  SizedBox(height: 15),
-                  Container(
-                    padding: EdgeInsets.all(14),
-                    
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF8FAFD),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE1E7F0)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFEAF1FB),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.lock, 
-                            color: Color(0xFF0A2342),
-                            size: 22,
-                          ),
-
-                          
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                               Text('Password',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                               ),
-                               SizedBox(height: 7),
-                               TextField(
-                                controller: passwordController,
-                                obscureText: obscurePassword,
-                                style: TextStyle(
-                                  color: Color(0xFF0A2342)
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                     borderRadius: BorderRadius.circular(12),
-                                     borderSide: BorderSide(
-                                      color: Color(0xFFE1E7F0),
-                                     ),
-                                  ),
-
-                                  suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      obscurePassword = !obscurePassword;
-                                    });
-                                  }, icon: Icon(
-                                    obscurePassword? Icons.visibility: Icons.visibility_off, 
-                                    color: Color(0xFF0A2342),),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'FullName',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
-                                          
-                                ),
-                               )
-                          ],
-                        ))
-                      ],
-                    )
-                  ),
-           
-                  
-                  SizedBox(height: 18),
-           
-                 
-           
-                  
-           
-                    const SizedBox(height: 6),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child:ElevatedButton(
-                        onPressed: (){
-                          Navigator.pop(context);
-                        }, 
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF145FCC),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          )
-                        ),
-                      child: Text('Save Changes',
-                       style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
                           ),
-                      ))
+                          SizedBox(height: 7),
+                          TextField(
+                            controller: fullNameController,
+                            style: TextStyle(color: Color(0xFF0A2342)),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFE1E7F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                 
-               
-                 
-             ],
-           ),
-         ),),
-      
-        
-    
-        );
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 15),
+
+              Container(
+                padding: EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Color(0xFFE1E7F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF1FB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.phone_outlined,
+                        color: Color(0xFF0A2342),
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Phone',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 7),
+                          TextField(
+                            controller: phoneController,
+                            style: TextStyle(color: Color(0xFF0A2342)),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFE1E7F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 15),
+              Container(
+                padding: EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Color(0xFFE1E7F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF1FB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.email,
+                        color: Color(0xFF0A2342),
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Email',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 7),
+                          TextField(
+                            controller: emailController,
+                            style: TextStyle(color: Color(0xFF0A2342)),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFE1E7F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 15),
+              Container(
+                padding: EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Color(0xFFE1E7F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF1FB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.local_shipping_rounded,
+                        color: Color(0xFF0A2342),
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Truck Number',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 7),
+                          TextField(
+                            controller: truckController,
+                            style: TextStyle(color: Color(0xFF0A2342)),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFE1E7F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 15),
+              Container(
+                padding: EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Color(0xFFE1E7F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF1FB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.lock,
+                        color: Color(0xFF0A2342),
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Password',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 7),
+                          TextField(
+                            controller: passwordController,
+                            obscureText: obscurePassword,
+                            style: TextStyle(color: Color(0xFF0A2342)),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFE1E7F0),
+                                ),
+                              ),
+
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    obscurePassword = !obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Color(0xFF0A2342),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 18),
+
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await saveProfile();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF145FCC),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Save Changes',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -31,7 +31,6 @@ class BandariFlowApp extends StatelessWidget {
 
         '/gatepass': (context) => MyTicketsPage(),
         '/profile': (context) => ProfilePage(),
-        '/updateprofile': (context) => UpdateProfilePage(),
       },
     );
   }

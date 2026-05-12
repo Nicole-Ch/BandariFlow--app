@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -110,5 +111,41 @@ class ApiService {
     } else {
       throw Exception('Register failed: ${response.body}');
     }
+  }
+
+  static Future<Map<String, dynamic>> getDriverProfile() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/driver/profile'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to load driver profile : ${response.body}');
+  }
+
+  static Future<Map<String, dynamic>> updateDriverProfile({
+    required String fullName,
+    required String phone,
+    required String idNumber,
+    required String licenseNumber,
+    required String truckPlate,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/driver/profile/'),
+      headers: await authHeaders(),
+      body: jsonEncode({
+        'fullname': fullName,
+        'phone': phone,
+        'id_number': idNumber,
+        'license_number': licenseNumber,
+        'preferred_truck': truckPlate,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to update driver profile: ${response.body}');
   }
 }
