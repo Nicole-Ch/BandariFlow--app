@@ -1,7 +1,10 @@
 import 'package:bandariflow/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UpdateProfilePage extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -21,8 +24,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   late final TextEditingController licenseController;
 
   bool obscurePassword = true;
+  bool isSaving = false;
   Uint8List?
   profileImageBytes; // holds the raw binary data (the actual bytes) of the image file
+  String? pickedFileName;
 
   @override
   void initState() {
@@ -36,7 +41,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     emailController = TextEditingController(
       text: widget.profile['user_email'] ?? '',
     );
-    truckController = TextEditingController(text: '');
+    truckController = TextEditingController(
+      text: widget.profile['preferred_truck'] ?? '',
+    );
     passwordController = TextEditingController(text: '');
     idNumberController = TextEditingController(
       text: widget.profile['id_number'] ?? '',
@@ -59,40 +66,79 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   }
 
   Future<void> saveProfile() async {
+    setState(() => isSaving = true);
     try {
+      File? imageFile;
+      if (profileImageBytes != null) {
+        final tempDir = await getTemporaryDirectory();
+        final name = pickedFileName ?? "profile_temp.jpg";
+        imageFile = File('${tempDir.path}/$name');
+        await imageFile.writeAsBytes(profileImageBytes!);
+      }
+
       await ApiService.updateDriverProfile(
         fullName: fullNameController.text.trim(),
         phone: phoneController.text.trim(),
         idNumber: idNumberController.text.trim(),
         licenseNumber: licenseController.text.trim(),
         truckPlate: truckController.text.trim(),
+        imageFile: imageFile,
       );
 
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (!mounted) return;
+
+      // Check if the error is due to an expired token session
+      if (e.toString().contains('token_not_valid') ||
+          e.toString().contains('expired')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your session has expired. Please log in again.'),
+          ),
+        );
+
+        // Clear the invalid token immediately so the app can recover
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('access_token');
+
+        if (!mounted) return;
+        // Kick the user out safely to the login portal screen
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      } else {
+        // Normal network or validation error handling fallback
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Update Failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => isSaving = false);
     }
   }
 
   Future<void> pickProfileImage() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      //OPENS FILE EXPLORER
-      type: FileType.image, //Tells the phone to only show pictures
+      type: FileType.image,
       withData: true,
     );
 
     if (result != null && result.files.single.bytes != null) {
       setState(() {
         profileImageBytes = result.files.single.bytes;
+        pickedFileName = result.files.single.name;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final String initialLetter = (fullNameController.text.isNotEmpty
+        ? fullNameController.text.substring(0, 1).toUpperCase()
+        : (widget.profile['fullname'] ?? 'D')
+              .toString()
+              .substring(0, 1)
+              .toUpperCase());
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -132,11 +178,42 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                               width: 120,
                               height: 120,
                             )
-                          : Image.asset(
-                              'assets/images/profile.jpg',
+                          : widget.profile['photo'] != null
+                          ? Image.network(
+                              widget.profile['photo'].toString().startsWith(
+                                    'http',
+                                  )
+                                  ? widget.profile['photo']
+                                  : 'http://10.0.2.2:8000${widget.profile['photo']}',
                               fit: BoxFit.cover,
                               width: 120,
                               height: 120,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    color: const Color(0xFF0A2342),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      initialLetter,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 44,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                            )
+                          : Container(
+                              // FIXED: Show dynamic clean color profile circle with initials text instead of assets
+                              color: const Color(0xFF0A2342),
+                              alignment: Alignment.center,
+                              child: Text(
+                                initialLetter,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 44,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                     ),
                   ),

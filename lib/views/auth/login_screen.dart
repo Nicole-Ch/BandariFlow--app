@@ -1,4 +1,5 @@
 import 'package:bandariflow/services/api_service.dart';
+import 'package:bandariflow/views/driver/profile_page.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,9 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       print('LOGIN SUCCESS: $result');
+      await Future.delayed(const Duration(milliseconds: 100));
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/dashboard',
+        (route) => false,
+      );
     } catch (e) {
       print('LOGIN ERROR: $e');
       ScaffoldMessenger.of(

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:http/http.dart' as http;
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -131,21 +131,44 @@ class ApiService {
     required String idNumber,
     required String licenseNumber,
     required String truckPlate,
+    File? imageFile, // This accepts the image file from your image picker
   }) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/driver/profile/'),
-      headers: await authHeaders(),
-      body: jsonEncode({
-        'fullname': fullName,
-        'phone': phone,
-        'id_number': idNumber,
-        'license_number': licenseNumber,
-        'preferred_truck': truckPlate,
-      }),
-    );
+    // Create a PATCH multipart request
+    final url = Uri.parse('$baseUrl/driver/profile/');
+    final request = http.MultipartRequest('PATCH', url);
+
+    // Fetch and apply your authentication headers
+    final headers = await authHeaders();
+
+    headers.remove('Content-Type');
+    request.headers.addAll(headers);
+
+    //  Attach text form fields
+    request.fields['fullname'] = fullName;
+    request.fields['phone'] = phone;
+    request.fields['id_number'] = idNumber;
+    request.fields['license_number'] = licenseNumber;
+    request.fields['preferred_truck'] = truckPlate;
+
+    // Attach the image file if it is selected
+    if (imageFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'photo', // This key name MUST exactly match your Django model/serializer field name
+          imageFile.path,
+        ),
+      );
+    }
+
+    // Send the streaming request to  Django API
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    //  Handle the server response status
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
+
     throw Exception('Failed to update driver profile: ${response.body}');
   }
 }

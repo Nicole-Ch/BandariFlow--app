@@ -3,6 +3,8 @@ import 'package:bandariflow/views/driver/update_profile.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -22,15 +24,24 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      loading = true;
+      error = null;
+    });
     try {
+      print("STARTING PROFILE API CALL...");
       final data = await ApiService.getDriverProfile();
-      print("DEBUG PROFILE DATA: $data");
+      print("PROFILE API FETCH SUCCESS: $data");
+
       if (!mounted) return;
       setState(() {
         profile = data;
         loading = false;
       });
     } catch (e) {
+      print("CRITICAL NETWORK ERROR DETECTED: $e");
       if (!mounted) return;
       setState(() {
         error = e.toString();
@@ -70,25 +81,37 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
-
-              // Look for where you display the profile image
+              SizedBox(height: 8),
+              // Replace the entire profile image SizedBox block in your profile_page.dart:
               SizedBox(
                 width: 120,
                 height: 120,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(100),
-                  child: profile?['photo'] != null
-                      ? Image.network(
-                          profile!['photo'], // The URL from Django
-                          height: 120,
-                          width: 120,
-                          fit: BoxFit.cover,
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: const Color(
+                    0xFF0A2342,
+                  ), // Dark corporate blue matching top bar
+                  backgroundImage: profile?['photo'] != null
+                      ? NetworkImage(
+                          profile!['photo'].toString().startsWith('http')
+                              ? profile!['photo']
+                              : 'http://10.0.2.2:8000${profile!['photo']}',
                         )
-                      : Image.asset(
-                          'assets/images/profile.jpg', // Fallback if no photo exists
-                          height: 120,
-                          width: 120,
-                        ),
+                      : null,
+                  child: profile?['photo'] == null
+                      ? Text(
+                          // Safely extracts the first letter of the driver's name, e.g., "K" from Karen
+                          (profile?['fullname'] ?? 'D')
+                              .toString()
+                              .substring(0, 1)
+                              .toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 46,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
                 ),
               ),
 
@@ -109,6 +132,14 @@ class _ProfilePageState extends State<ProfilePage> {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
+                  if (profile == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile data is still loading...'),
+                      ),
+                    );
+                    return;
+                  }
                   final updated = await Navigator.push(
                     context,
                     MaterialPageRoute(

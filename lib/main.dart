@@ -3,7 +3,6 @@ import 'package:bandariflow/views/auth/register_screen.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:bandariflow/views/driver/profile_page.dart';
 import 'package:bandariflow/views/driver/tickets_page.dart';
-import 'package:bandariflow/views/driver/update_profile.dart';
 import 'package:flutter/material.dart';
 import 'views/auth/splash_screen.dart';
 
