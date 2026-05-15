@@ -1,7 +1,12 @@
+import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
+import 'package:file_picker/file_picker.dart';
+
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:bandariflow/services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 
 class BookingCreate extends StatefulWidget {
   const BookingCreate({super.key});
@@ -11,24 +16,142 @@ class BookingCreate extends StatefulWidget {
 }
 
 class _BookingCreateState extends State<BookingCreate> {
-  final shipperNameController = TextEditingController();
-  final pickupLocationController = TextEditingController();
-  final dropoffLocationController = TextEditingController();
-  final pickupDateController = TextEditingController();
-  final deliveryDateController = TextEditingController();
-  final cargoTypeController = TextEditingController();
-  final cargoWeightController = TextEditingController();
-  final freightCostController = TextEditingController();
-  final specialInstructionsController = TextEditingController();
+  final containerNumberController = TextEditingController();
+  final manifestNumberController = TextEditingController();
+  int? createdBookingId;
+  List<dynamic> slots = [];
+  List<dynamic> trucks = [];
+  List<dynamic> shippingLines = [];
+
+  int? selectedSlotId;
+  int? selectedTruckId;
+  int? selectedShippingLineId;
+
+  bool isEmpty = false;
+  String direction = 'import_pickup';
+
+  bool loading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  @override
+  void dispose() {
+    containerNumberController.dispose();
+    manifestNumberController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadData() async {
+    try {
+      final results = await Future.wait([
+        ApiService.getSlots(),
+        ApiService.getTrucks(),
+        ApiService.getShippingLines(),
+      ]);
+
+      // Sort shipping lines alphabetically by name
+      List<dynamic> sortedLines = List.from(results[2]);
+      sortedLines.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));
+
+      if (!mounted) return;
+      setState(() {
+        slots = results[0];
+        trucks = results[1];
+        shippingLines = sortedLines; // ✅ Sorted A-Z
+        loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        error = e.toString();
+        loading = false;
+      });
+    }
+  }
+
+  Future<bool> requestPermissions() async {
+    if (await Permission.storage.request().isGranted) {
+      return true;
+    } else {
+      // Show a dialog explaining why you need permission
+      return false;
+    }
+  }
+
+  Future<void> submitBooking() async {
+    if (selectedSlotId == null ||
+        selectedTruckId == null ||
+        selectedShippingLineId == null ||
+        containerNumberController.text.trim().isEmpty ||
+        manifestNumberController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    try {
+      final result = await ApiService.createBookings(
+        slotId: selectedSlotId!,
+        truckId: selectedTruckId!,
+        shippingLineId: selectedShippingLineId!,
+        containerNumber: containerNumberController.text.trim(),
+        isEmpty: isEmpty,
+        direction: direction,
+        manifestNumber: manifestNumberController.text.trim(),
+      );
+
+      setState(() {
+        createdBookingId = result['id'];
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Booking created! You can now upload documents.'),
+        ),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking created successfully')),
+      );
+
+      debugPrint('Booking created: $result');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  String formatDate(dynamic value) {
+    if (value == null) return '--';
+    final text = value.toString();
+    if (text.length < 10) return text;
+    return text.substring(0, 10);
+  }
+
+  String formatTime(dynamic value) {
+    if (value == null) return '--';
+    final text = value.toString();
+    if (text.length < 16) return text.substring(11, 16);
+    return text;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        title: Text('Create Booking'),
+        title: const Text('Create Booking'),
         centerTitle: true,
-        backgroundColor: Color(0xFF0A2342),
+        backgroundColor: const Color(0xFF0A2342),
         foregroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -41,81 +164,314 @@ class _BookingCreateState extends State<BookingCreate> {
             );
           },
         ),
-        iconTheme: IconThemeData(color: Colors.white),
       ),
-
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF8FAFD),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Color(0xFFE1E7F0)),
-                  ),
-                  child: Row(
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : error != null
+          ? Center(child: Text(error!))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Image.asset(
-                          'assets/images/Truck.jpg',
-                          width: 120,
-                          height: 80,
-                          fit: BoxFit.cover,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFD),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE1E7F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.asset(
+                                'assets/images/Truck.jpg',
+                                width: 120,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SizedBox(
+                                height: 47,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    // First, ensure a booking exists (user must have submitted form first)
+                                    if (createdBookingId == null) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            'Please submit the booking first, then upload documents.',
+                                          ),
+                                          backgroundColor: Colors.grey[850],
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Open file picker directly
+                                    // Open file picker directly (Configured for PDFs)
+                                    FilePickerResult? result = await FilePicker
+                                        .platform
+                                        .pickFiles(
+                                          type: FileType.custom,
+                                          allowedExtensions: ['pdf'],
+                                        );
+                                    if (result == null) return;
+
+                                    // Show uploading indicator
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Uploading document...'),
+                                      ),
+                                    );
+
+                                    try {
+                                      await ApiService.uploadBookingDocument(
+                                        bookingId: createdBookingId!,
+                                        // Pass the selected PDF path into the File object
+                                        file: File(result.files.single.path!),
+                                      );
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Document uploaded successfully!',
+                                          ),
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Upload failed: $e'),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2F6FD6),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.upload_file_outlined,
+                                        size: 22,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          'Upload Docs',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Divider(height: 1),
+                      const SizedBox(height: 18),
+
+                      _fieldCard(
+                        icon: Icons.confirmation_num_outlined,
+                        title: 'Container Number',
+                        child: TextField(
+                          controller: containerNumberController,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Enter container number',
+                          ),
                         ),
                       ),
 
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 47,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2F6FD6),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.upload_file_outlined, size: 22),
-                                SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'Upload Docs',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                      const SizedBox(height: 14),
 
-                                    maxLines: 1,
-                                  ),
-                                ),
-                              ],
+                      _fieldCard(
+                        icon: Icons.calendar_month,
+                        title: 'Slot',
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedSlotId,
+                          decoration: _inputDecoration(),
+                          isExpanded:
+                              true, // <-- this helps the dropdown take full width
+                          items: slots.map((slot) {
+                            final gate = slot['gate']?['name'] ?? 'Gate';
+                            final date = formatDate(slot['start_time']);
+                            final start = formatTime(slot['start_time']);
+                            final end = formatTime(slot['end_time']);
+                            return DropdownMenuItem<int>(
+                              value: slot['id'],
+                              child: Text(
+                                '$gate | $date | $start-$end',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) =>
+                              setState(() => selectedSlotId = value),
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      _fieldCard(
+                        icon: Icons.local_shipping_rounded,
+                        title: 'Truck',
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedTruckId,
+                          decoration: _inputDecoration(),
+                          items: trucks.map((truck) {
+                            return DropdownMenuItem<int>(
+                              value: truck['id'],
+                              child: Text(truck['license_plate'] ?? 'Truck'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => selectedTruckId = value);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      _fieldCard(
+                        icon: Icons.apartment,
+                        title: 'Shipping Line',
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedShippingLineId,
+                          decoration: _inputDecoration(),
+                          items: shippingLines.map((line) {
+                            return DropdownMenuItem<int>(
+                              value: line['id'],
+                              child: Text(line['name'] ?? 'Shipping Line'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => selectedShippingLineId = value);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      _fieldCard(
+                        icon: Icons.scale,
+                        title: 'Container Status',
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            isEmpty ? 'Empty Container' : 'Full Container',
+                          ),
+                          value: isEmpty,
+                          onChanged: (value) {
+                            setState(() => isEmpty = value);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      _fieldCard(
+                        icon: Icons.swap_horiz,
+                        title: 'Direction',
+                        child: DropdownButtonFormField<String>(
+                          initialValue: direction,
+                          decoration: _inputDecoration(),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'import_pickup',
+                              child: Text('Import Pickup'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'export_dropoff',
+                              child: Text('Export Drop-Off'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'empty_return',
+                              child: Text('Empty Return'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => direction = value);
+                            }
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      _fieldCard(
+                        icon: Icons.notes_rounded,
+                        title: 'Manifest Number',
+                        child: TextField(
+                          controller: manifestNumberController,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Enter manifest number',
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 13),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 49,
+                        child: ElevatedButton(
+                          onPressed: submitBooking,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2F6FD6),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Submit Booking',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -123,590 +479,66 @@ class _BookingCreateState extends State<BookingCreate> {
                     ],
                   ),
                 ),
-
-                SizedBox(height: 18),
-                Divider(height: 1),
-                SizedBox(height: 18),
-
-                //SHIPPERS NAME
-                Container(
-                  padding: EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF8FAFD),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE1E7F0)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF0F4FA),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          color: Color(0xFF2F6FD6),
-                          size: 20,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Shipper Name',
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 3),
-                            TextField(
-                              controller: shipperNameController,
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 15,
-                              ),
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Enter shipper name',
-                                hintStyle: TextStyle(color: Colors.black38),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 14),
-
-                //PICKUP LOCATION
-                Container(
-                  padding: EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF8FAFD),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE1E7F0)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF0F4FA),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.apartment,
-                          color: Color(0xFF2F6FD6),
-                          size: 20,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pickup Location',
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 3),
-                            TextField(
-                              controller: pickupLocationController,
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 15,
-                              ),
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Enter Pickup location',
-                                hintStyle: TextStyle(color: Colors.black38),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 14),
-
-                //DROP OFF LOCATION
-                Container(
-                  padding: EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF8FAFD),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE1E7F0)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF0F4FA),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.location_on,
-                          color: Color(0xFF2F6FD6),
-                          size: 20,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Drop-off Location',
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 3),
-                            TextField(
-                              controller: dropoffLocationController,
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 15,
-                              ),
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Enter drop-off location',
-                                hintStyle: TextStyle(color: Colors.black38),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 14),
-                //PICKUP DATE
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Color(0xFFE1E7F0)),
-                        ),
-
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFD),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Color(0xFFE1E7F0)),
-                              ),
-                              child: Icon(
-                                Icons.calendar_month,
-                                color: Color(0xFF2F6FD6),
-                                size: 20,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Pickup Date',
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(height: 3),
-                                  TextField(
-                                    controller: pickupDateController,
-                                    readOnly: true,
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 15,
-                                    ),
-                                    decoration: InputDecoration(
-                                      isDense: true,
-                                      border: InputBorder.none,
-                                      hintText: 'Select date',
-                                      hintStyle: TextStyle(
-                                        color: Colors.black38,
-                                      ),
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    //DELIVERY DATE
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Color(0xFFE1E7F0)),
-                        ),
-
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFD),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Color(0xFFE1E7F0)),
-                              ),
-                              child: Icon(
-                                Icons.calendar_month,
-                                color: Color(0xFF2F6FD6),
-                                size: 20,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Delivery Date',
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(height: 3),
-                                  TextField(
-                                    controller: deliveryDateController,
-                                    readOnly: true,
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 15,
-                                    ),
-                                    decoration: InputDecoration(
-                                      isDense: true,
-                                      border: InputBorder.none,
-                                      hintText: 'Select date',
-                                      hintStyle: TextStyle(
-                                        color: Colors.black38,
-                                      ),
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 14),
-                //CARGO TYPE
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Color(0xFFE1E7F0)),
-                        ),
-
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFD),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Color(0xFFE1E7F0)),
-                              ),
-                              child: Icon(
-                                Icons.inventory_2,
-                                color: Color(0xFF2F6FD6),
-                                size: 20,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Cargo Type',
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(height: 3),
-                                  TextField(
-                                    controller: cargoTypeController,
-                                    readOnly: true,
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 15,
-                                    ),
-                                    decoration: InputDecoration(
-                                      isDense: true,
-                                      border: InputBorder.none,
-                                      hintText: 'Enter cargo description',
-                                      hintStyle: TextStyle(
-                                        color: Colors.black38,
-                                      ),
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    //CARGO TYPE
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Color(0xFFE1E7F0)),
-                        ),
-
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFD),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Color(0xFFE1E7F0)),
-                              ),
-                              child: Icon(
-                                Icons.scale,
-                                color: Color(0xFF2F6FD6),
-                                size: 20,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Cargo Weight',
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(height: 3),
-                                  TextField(
-                                    controller: cargoWeightController,
-                                    readOnly: true,
-                                    style: TextStyle(
-                                      color: Color(0xFF0A2342),
-                                      fontSize: 15,
-                                    ),
-                                    decoration: InputDecoration(
-                                      isDense: true,
-                                      border: InputBorder.none,
-                                      hintText: 'Enter Weight (kg)',
-                                      hintStyle: TextStyle(
-                                        color: Colors.black38,
-                                      ),
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 14),
-
-                Container(
-                  padding: EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF8FAFD),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE1E7F0)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF0F4FA),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Color(0xFFE1E7F0)),
-                        ),
-                        child: Icon(
-                          Icons.notes_rounded,
-                          color: Color(0xFF2F6FD6),
-                          size: 20,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              'Special Instructions',
-                              style: TextStyle(
-                                color: Color(0xFF0A2342),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Color(0xFFE1E7F0)),
-                              ),
-                              child: TextField(
-                                controller: specialInstructionsController,
-                                maxLines: 5,
-                                style: TextStyle(
-                                  color: Color(0xFF0A2342),
-                                  fontSize: 15,
-                                ),
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: 'Enter any special instructions',
-                                  hintStyle: TextStyle(color: Colors.black38),
-                                  contentPadding: EdgeInsets.all(14),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 13),
-                SizedBox(
-                  width: double.infinity,
-                  height: 49,
-                  child: ElevatedButton(
-                    onPressed: submitBooking,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2F6FD6),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Submit Booking',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
-
       bottomNavigationBar: const DriverBottomNav(currentIndex: 1),
     );
   }
 
-  Future<void> submitBooking() async {
-    try {
-      final result = await ApiService.createBooking(
-        slotId: 1, // replace with selected slot
-        truckId: 1, // replace with selected truck
-        shippingLineId: 1, // replace with selected shipping line
-        containerNumber: shipperNameController.text.trim(),
-        isEmpty: false,
-        direction: 'import_pickup',
-        manifestNumber: cargoTypeController.text.trim(),
-        yardCapacityId: 1, // replace with selected yard capacity
-      );
+  Widget _fieldCard({
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE1E7F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F4FA),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: const Color(0xFF2F6FD6), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF0A2342),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                child,
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking created successfully')),
-      );
-
-      print(result);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      isDense: true,
+      border: InputBorder.none,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    );
   }
 }

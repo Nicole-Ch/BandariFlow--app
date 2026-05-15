@@ -171,4 +171,95 @@ class ApiService {
 
     throw Exception('Failed to update driver profile: ${response.body}');
   }
+
+  static Future<List<dynamic>> getSlots() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/slots/'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load slots');
+  }
+
+  static Future<List<dynamic>> getTrucks() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/trucks/'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load trucks');
+  }
+
+  static Future<List<dynamic>> getShippingLines() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/shippingline/'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load shipping lines');
+  }
+
+  static Future<Map<String, dynamic>> createBookings({
+    required int slotId,
+    required int truckId,
+    required int shippingLineId,
+    required String containerNumber,
+    required bool isEmpty,
+    required String direction,
+    required String manifestNumber,
+    int? yardCapacityId,
+  }) async {
+    final body = <String, dynamic>{
+      'slot': slotId,
+      'truck': truckId,
+      'shippingline': shippingLineId,
+      'container_number': containerNumber,
+      'is_empty': isEmpty,
+      'direction': direction,
+      'manifest_number': manifestNumber,
+    };
+
+    if (yardCapacityId != null) {
+      body['yard_capacity'] = yardCapacityId;
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/bookings/create/'),
+      headers: await authHeaders(),
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    throw Exception('Failed to create booking: ${response.body}');
+  }
+
+  static Future<void> uploadBookingDocument({
+    required int bookingId,
+    required File file,
+  }) async {
+    final uri = Uri.parse('$baseUrl/bookings/documents/create/');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(await authHeaders())
+      ..fields['booking'] = bookingId.toString()
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to upload: ${response.body}');
+    }
+  }
 }
