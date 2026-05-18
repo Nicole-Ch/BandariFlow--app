@@ -133,12 +133,16 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final String initialLetter = (fullNameController.text.isNotEmpty
-        ? fullNameController.text.substring(0, 1).toUpperCase()
-        : (widget.profile['fullname'] ?? 'D')
+    final String initialLetter = (fullNameController.text.trim().isNotEmpty)
+        ? fullNameController.text.trim().substring(0, 1).toUpperCase()
+        : (widget.profile['fullname'] != null &&
+              widget.profile['fullname'].toString().trim().isNotEmpty)
+        ? widget.profile['fullname']
               .toString()
+              .trim()
               .substring(0, 1)
-              .toUpperCase());
+              .toUpperCase()
+        : 'D';
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
       appBar: AppBar(

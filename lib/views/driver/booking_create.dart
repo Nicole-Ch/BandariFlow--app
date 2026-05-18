@@ -4,7 +4,6 @@ import 'package:file_picker/file_picker.dart';
 
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -142,6 +141,211 @@ class _BookingCreateState extends State<BookingCreate> {
     final text = value.toString();
     if (text.length < 16) return text.substring(11, 16);
     return text;
+  }
+
+  void _showAddTruckDialog() {
+    final plateController = TextEditingController();
+    bool isCertified = false; // Tracks if the user ticked the legal check box
+    String?
+    selectedFileName; // Stores the name of our file starts as completely empty/null
+    bool isUploading =
+        false; // Tracks if a loading animation wheel should spin right now
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: const [
+                Icon(Icons.shield, color: Color(0xFF0A2342)),
+                SizedBox(width: 8),
+                Text(
+                  'Verify Company Truck',
+                  style: TextStyle(
+                    color: Color(0xFF0A2342),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'To prevent unauthorized bookings, please provide your vehicle details and registration logbook.',
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Truck Lisence Input Field
+                  TextField(
+                    controller: plateController,
+                    enabled: !isUploading,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      labelText: 'Truck Plate Number',
+                      hintText: 'e.g., KCD 456X',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.local_shipping),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // MOCK DOCUMENT UPLOAD FIELD THAT SIMULATES FILE PICKER
+                  InkWell(
+                    onTap:
+                        isUploading // if isUploading is true, the button becomes null (disabled). If it is false, it executes the function.
+                        ? null
+                        : () async {
+                            setDialogState(() => isUploading = true);
+
+                            // Simulate file picker loading
+                            await Future.delayed(
+                              const Duration(milliseconds: 800),
+                            );
+
+                            setDialogState(() {
+                              selectedFileName =
+                                  "logbook_copy_${plateController.text.trim().replaceAll(' ', '_')}.pdf";
+                              isUploading = false;
+                            });
+                          },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey.shade400,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.withValues(alpha: 0.05),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selectedFileName != null
+                                ? Icons.picture_as_pdf
+                                : Icons.upload_file,
+                            color: selectedFileName != null
+                                ? Colors.red
+                                : Colors.grey,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              selectedFileName ?? 'Upload Truck Logbook (PDF)',
+                              style: TextStyle(
+                                color: selectedFileName != null
+                                    ? Colors.black
+                                    : Colors.grey[700],
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Security Checkbox Accordance
+                  CheckboxListTile(
+                    title: const Text(
+                      "I certify that this truck is officially leased or owned by my registered company transport fleet.",
+                      style: TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                    value: isCertified,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: const Color(0xFF0A2342),
+                    onChanged: isUploading
+                        ? null
+                        : (bool? value) {
+                            setDialogState(() {
+                              isCertified = value ?? false;
+                            });
+                          },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isUploading ? null : () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color.fromARGB(255, 134, 133, 133)),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0A2342),
+                  foregroundColor: Colors.white,
+                ),
+                // Button only activates if text is typed, file is "uploaded", and box checked!
+                onPressed:
+                    (!isCertified ||
+                        selectedFileName == null ||
+                        plateController.text.trim().isEmpty ||
+                        isUploading)
+                    ? null
+                    : () async {
+                        setDialogState(() => isUploading = true);
+
+                        await Future.delayed(
+                          const Duration(milliseconds: 1500),
+                        );
+
+                        if (!mounted) return;
+                        Navigator.pop(context); // Close popup window
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              '🔒 Truck document verified & linked successfully!',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+
+                        // Inject the mock plate entry right into the Flutter dropdown state tree array
+                        setState(() {
+                          trucks.add({
+                            'id': DateTime.now().millisecondsSinceEpoch,
+                            'license_plate': plateController.text
+                                .trim()
+                                .toUpperCase(),
+                          });
+                          selectedTruckId = trucks.last['id']; // Auto-select it
+                        });
+                      },
+                child: isUploading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Verify & Submit'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -357,19 +561,62 @@ class _BookingCreateState extends State<BookingCreate> {
                       _fieldCard(
                         icon: Icons.local_shipping_rounded,
                         title: 'Truck',
-                        child: DropdownButtonFormField<int>(
-                          initialValue: selectedTruckId,
-                          decoration: _inputDecoration(),
-                          items: trucks.map((truck) {
-                            return DropdownMenuItem<int>(
-                              value: truck['id'],
-                              child: Text(truck['license_plate'] ?? 'Truck'),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() => selectedTruckId = value);
-                          },
-                        ),
+                        child: trucks.isEmpty
+                            ? InkWell(
+                                onTap:
+                                    _showAddTruckDialog, // 👈 Opens your verification popup
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.orange.shade300,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.orange.withValues(
+                                      alpha: 0.05,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.orange,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'No trucks found. Tap here to register & link truck.',
+                                          style: TextStyle(
+                                            color: Colors.orange,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : DropdownButtonFormField<int>(
+                                initialValue: selectedTruckId,
+                                decoration: _inputDecoration(),
+                                items: trucks.map((truck) {
+                                  return DropdownMenuItem<int>(
+                                    value: truck['id'],
+                                    child: Text(
+                                      truck['license_plate'] ?? 'Truck',
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() => selectedTruckId = value);
+                                },
+                              ),
                       ),
 
                       const SizedBox(height: 14),

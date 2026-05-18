@@ -82,15 +82,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               SizedBox(height: 8),
+
               // Replace the entire profile image SizedBox block in your profile_page.dart:
               SizedBox(
                 width: 120,
                 height: 120,
                 child: CircleAvatar(
                   radius: 60,
-                  backgroundColor: const Color(
-                    0xFF0A2342,
-                  ), // Dark corporate blue matching top bar
+                  backgroundColor: const Color(0xFF0A2342),
                   backgroundImage: profile?['photo'] != null
                       ? NetworkImage(
                           profile!['photo'].toString().startsWith('http')
@@ -100,11 +99,18 @@ class _ProfilePageState extends State<ProfilePage> {
                       : null,
                   child: profile?['photo'] == null
                       ? Text(
-                          // Safely extracts the first letter of the driver's name, e.g., "K" from Karen
-                          (profile?['fullname'] ?? 'D')
-                              .toString()
-                              .substring(0, 1)
-                              .toUpperCase(),
+                          // ✅ Fixed: Safely checks if name is blank or null before slicing string memory channels
+                          (profile?['fullname'] != null &&
+                                  profile!['fullname']
+                                      .toString()
+                                      .trim()
+                                      .isNotEmpty)
+                              ? profile!['fullname']
+                                    .toString()
+                                    .trim()
+                                    .substring(0, 1)
+                                    .toUpperCase()
+                              : 'D', // Fallback to 'D' for Driver if the field is empty string ""
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 46,
