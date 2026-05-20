@@ -262,4 +262,16 @@ class ApiService {
       throw Exception('Failed to upload: ${response.body}');
     }
   }
+
+  static Future<List<dynamic>> getBookings() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bookings/'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load bookings: ${response.body}');
+  }
 }
