@@ -26,21 +26,25 @@ class GatePassScreen extends StatelessWidget {
     Color statusColor;
     Color statusBg;
 
+    final displayStatus = status.toLowerCase() == 'approved'
+        ? 'VERIFIED'
+        : status.toUpperCase();
+
     switch (status.toLowerCase()) {
       case 'verified':
-        statusColor = Color(0xFF1B8F3A);
-        statusBg = Color(0xFFE7F8EC);
+      case 'approved':
+        statusColor = const Color(0xFF1B8F3A);
+        statusBg = const Color(0xFFE7F8EC);
         break;
 
       case 'rejected':
-        statusColor = Color(0xFFB7791F);
-        statusBg = Color.fromARGB(255, 190, 40, 10);
-
+        statusColor = const Color(0xFFB7791F);
+        statusBg = const Color.fromARGB(255, 190, 40, 10);
         break;
 
       default:
-        statusColor = Color(0xFFB7791f);
-        statusBg = Color(0xFFFFF3D9);
+        statusColor = const Color(0xFFB7791F);
+        statusBg = const Color(0xFFFFF3D9);
     }
 
     return Scaffold(
@@ -192,7 +196,7 @@ class GatePassScreen extends StatelessWidget {
                             SizedBox(width: 8),
 
                             Text(
-                              status,
+                              displayStatus,
                               style: TextStyle(
                                 color: statusColor,
                                 fontSize: 18,
@@ -232,7 +236,7 @@ class GatePassScreen extends StatelessWidget {
                                       ),
                                       SizedBox(height: 2),
                                       Text(
-                                        '10:00 AM - 12:00 PM',
+                                        timeWindow,
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,

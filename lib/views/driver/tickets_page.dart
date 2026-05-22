@@ -225,7 +225,7 @@ Widget _ticketCardFromApi(BuildContext context, Map<String, dynamic> booking) {
   switch (status) {
     case 'approved':
       statusColor = const Color(0xFF1B8F3A);
-      statusText = 'APPROVED';
+      statusText = 'VERIFIED';
       break;
     case 'pending':
       statusColor = const Color(0xFFF39C12);

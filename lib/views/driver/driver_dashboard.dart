@@ -1,6 +1,8 @@
+import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/driver/gate_pass_screen.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
@@ -10,8 +12,122 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
+  List<dynamic> bookings = [];
+  Map<String, dynamic>? activeBooking;
+  bool loading = true;
+
+  Timer? _countdownTimer;
+  String _hoursStr = '00';
+  String _minutesStr = '00';
+  String _secondsStr = '00';
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel(); //  stops running in background when page closes
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadDashboardData();
+  }
+
+  Future<void> loadDashboardData() async {
+    try {
+      final data = await ApiService.getBookings();
+
+      Map<String, dynamic>? approvedBooking;
+
+      for (final b in data) {
+        final status = (b['status'] ?? '').toString().toLowerCase();
+        if (status == 'approved') {
+          approvedBooking = Map<String, dynamic>.from(b);
+          break;
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        bookings = data;
+        activeBooking = approvedBooking; // only approved booking
+        loading = false;
+      });
+      // Start calculating down instantly if a booking exists
+      if (approvedBooking != null) {
+        _startCountdown(approvedBooking['slot_detail']?['start_time']);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+        activeBooking = null;
+      });
+    }
+  }
+
+  void _startCountdown(dynamic startTimeStr) {
+    _countdownTimer?.cancel(); // Clear any existing clock track
+    if (startTimeStr == null) return;
+
+    DateTime? targetTime;
+    try {
+      targetTime = DateTime.parse(startTimeStr.toString()).toLocal();
+    } catch (_) {
+      return; // Stop if string format cannot parse
+    }
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final now = DateTime.now();
+      final difference = targetTime!.difference(now);
+
+      if (difference.isNegative) {
+        // Driver is inside or past their entry slot threshold
+        if (mounted) {
+          setState(() {
+            _hoursStr = '00';
+            _minutesStr = '00';
+            _secondsStr = '00';
+            _countdownTimer?.cancel();
+          });
+        }
+        return;
+      }
+
+      // Convert difference duration down into block segments
+      final hours = difference.inHours;
+      final minutes = difference.inMinutes.remainder(60);
+      final seconds = difference.inSeconds.remainder(60);
+
+      if (mounted) {
+        setState(() {
+          _hoursStr = hours.toString().padLeft(2, '0');
+          _minutesStr = minutes.toString().padLeft(2, '0');
+          _secondsStr = seconds.toString().padLeft(2, '0');
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final booking = activeBooking;
+    final slot = booking?['slot_detail'] ?? {};
+
+    final gateName = booking == null
+        ? 'No approved booking'
+        : slot['gate']?['name']?.toString() ?? '';
+
+    final containerNo = booking == null
+        ? '--'
+        : booking['container_number']?.toString() ?? '';
+
+    final timeWindow = booking == null
+        ? '--:-- - --:--'
+        : '${_formatTime(slot['start_time'])} - ${_formatTime(slot['end_time'])}';
+
+    final bookingRef = booking == null ? '--' : 'BK-${booking['id']}';
+
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
 
@@ -124,7 +240,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'LIVE',
+                                  booking == null ? 'NONE' : 'LIVE',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -139,102 +255,15 @@ class _DriverDashboardState extends State<DriverDashboard> {
                     ),
 
                     const SizedBox(height: 11),
+                    // LIVE SYNCHRONIZED TIMER COUNTDOWN
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Column(
-                          children: [
-                            Text(
-                              '01',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 40,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'HRS',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        SizedBox(width: 12),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 20),
-                          child: Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-
-                        Column(
-                          children: [
-                            Text(
-                              '14',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 40,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'MIN',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        SizedBox(width: 12),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 20),
-                          child: Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-
-                        Column(
-                          children: [
-                            Text(
-                              '22',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 40,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'SEC',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
+                      children: [
+                        _buildTimeBlock(_hoursStr, 'HRS'),
+                        _buildColonDivider(),
+                        _buildTimeBlock(_minutesStr, 'MIN'),
+                        _buildColonDivider(),
+                        _buildTimeBlock(_secondsStr, 'SEC'),
                       ],
                     ),
 
@@ -280,7 +309,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
                                     SizedBox(height: 2),
                                     Text(
-                                      '14:00 - 15:00',
+                                      timeWindow,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
@@ -328,7 +357,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                     ),
                                     SizedBox(height: 2),
                                     Text(
-                                      'TGBU123456',
+                                      containerNo,
                                       style: TextStyle(
                                         color: Colors.white70,
                                         fontSize: 16,
@@ -511,7 +540,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               ),
                               SizedBox(width: 6),
                               Text(
-                                'Approved',
+                                activeBooking == null
+                                    ? 'No approved Booking'
+                                    : 'Approved',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -554,7 +585,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'TGBU123456',
+                                    containerNo,
                                     style: TextStyle(
                                       color: Color(0xFF0A2342),
                                       fontSize: 18,
@@ -590,7 +621,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    '10:00 AM - 12:00 PM',
+                                    timeWindow,
                                     style: TextStyle(
                                       color: Color(0xFF0A2342),
                                       fontSize: 16,
@@ -625,7 +656,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'GATE 18 - Main Entrance',
+                                    gateName,
                                     style: TextStyle(
                                       color: Color(0xFF0A2342),
                                       fontSize: 16,
@@ -665,22 +696,32 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GatePassScreen(
-                          qrToken: 'YOUR_QR_TOKEN_FROM_BACKEND',
-                          gateName: 'GATE 18 - MAIN ENTRANCE',
-                          scanText: 'Scan at Entrance',
-                          status: 'Verified',
-                          containerNumber: 'TGBU1234567',
-                          timeWindow: '10:00 AM - 12:00 PM',
-                          bookingRef: 'BK-987654',
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: activeBooking == null
+                      ? null
+                      : () {
+                          final slot = activeBooking!['slot_detail'] ?? {};
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GatePassScreen(
+                                qrToken:
+                                    activeBooking!['qr_token']?.toString() ??
+                                    '',
+                                gateName:
+                                    slot['gate']?['name']?.toString() ?? '',
+                                scanText: 'Scan at Entrance',
+                                status: 'Verified',
+                                containerNumber:
+                                    activeBooking!['container_number']
+                                        ?.toString() ??
+                                    '',
+                                timeWindow:
+                                    '${_formatTime(slot['start_time'])} - ${_formatTime(slot['end_time'])}',
+                                bookingRef: 'BK-${activeBooking!['id']}',
+                              ),
+                            ),
+                          );
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFFFFD700),
                     foregroundColor: Color(0xFF0A2342),
@@ -715,6 +756,45 @@ class _DriverDashboardState extends State<DriverDashboard> {
       bottomNavigationBar: const DriverBottomNav(currentIndex: 0),
     );
   }
+
+  Widget _buildTimeBlock(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 40,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColonDivider() {
+    return const Padding(
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 12,
+        bottom: 20,
+      ), // FIXED: Changed to only() so bottom is allowed
+      child: Text(
+        ':',
+        style: TextStyle(
+          color: Colors.white38,
+          fontSize: 30,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 }
 
 // ignore: unused_element
@@ -747,4 +827,13 @@ class _HeatBox extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatTime(dynamic value) {
+  if (value == null) return '--:--';
+  final text = value.toString();
+  if (text.length >= 16) {
+    return text.substring(11, 16);
+  }
+  return text;
 }
