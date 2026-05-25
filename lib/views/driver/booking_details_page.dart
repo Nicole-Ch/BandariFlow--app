@@ -13,6 +13,9 @@ class BookingDetailsPage extends StatelessWidget {
     final status = booking['status']?.toString() ?? '';
     final bookingRef = 'BK-${booking['id']}';
 
+    // Normalize the status string to make comparisons reliable
+    final cleanStatus = status.trim().toLowerCase();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -53,8 +56,22 @@ class BookingDetailsPage extends StatelessWidget {
               Text('Container: $containerNo'),
               const SizedBox(height: 8),
               Text('Status: $status'),
-              const SizedBox(height: 8),
-              Text('QR Token: ${booking['qr_token'] ?? ''}'),
+              const SizedBox(height: 12),
+
+              if (cleanStatus == 'approved') ...[
+                Text(
+                  'QR Token: ${booking['qr_token'] ?? ''}',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ] else ...[
+                const Text(
+                  'QR Pass will be available once your booking is approved.',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -36,7 +36,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Future<void> loadDashboardData() async {
     try {
       final data = await ApiService.getBookings();
-
       Map<String, dynamic>? approvedBooking;
 
       for (final b in data) {
@@ -50,19 +49,82 @@ class _DriverDashboardState extends State<DriverDashboard> {
       if (!mounted) return;
       setState(() {
         bookings = data;
-        activeBooking = approvedBooking; // only approved booking
+        activeBooking = approvedBooking;
         loading = false;
       });
-      // Start calculating down instantly if a booking exists
+
       if (approvedBooking != null) {
         _startCountdown(approvedBooking['slot_detail']?['start_time']);
       }
+
+      // Check for broadcast alerts right after loading completes
+      await checkForBroadcastAlerts();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         loading = false;
         activeBooking = null;
       });
+    }
+  }
+
+  Future<void> checkForBroadcastAlerts() async {
+    try {
+      final List<dynamic> alerts = await ApiService.getBroadcastAlerts();
+
+      if (alerts.isNotEmpty && mounted) {
+        final latestAlert = alerts.first;
+
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF0A2342),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
+                children: [
+                  const Icon(
+                    Icons.verified,
+                    color: Color(0xFF59E38C),
+                    size: 26,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      latestAlert['title'] ?? 'Notice',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Text(
+                latestAlert['message'] ?? '',
+                style: const TextStyle(color: Colors.white70, fontSize: 15),
+              ),
+              actions: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFFFD700),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'DISMISS',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint("Popup Error: $e");
     }
   }
 

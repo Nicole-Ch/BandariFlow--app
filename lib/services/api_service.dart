@@ -287,4 +287,23 @@ class ApiService {
     }
     throw Exception('Failed to load gates: ${response.body}');
   }
+
+  static Future<List<dynamic>> getBroadcastAlerts() async {
+    try {
+      final headers = await authHeaders();
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/broadcasts/'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      throw Exception('Failed to load broadcasts: ${response.body}');
+    } catch (e) {
+      debugPrint('Broadcast Networking Sync Error: $e');
+      return [];
+    }
+  }
 }
