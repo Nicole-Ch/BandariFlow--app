@@ -172,16 +172,17 @@ class ApiService {
     throw Exception('Failed to update driver profile: ${response.body}');
   }
 
-  static Future<List<dynamic>> getSlots() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/slots/'),
-      headers: await authHeaders(),
-    );
+  static Future<List<dynamic>> getSlots({int? gateId}) async {
+    final uri = gateId == null
+        ? Uri.parse('$baseUrl/slots/')
+        : Uri.parse('$baseUrl/slots/?gate_id=$gateId');
+
+    final response = await http.get(uri, headers: await authHeaders());
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
     }
-    throw Exception('Failed to load slots');
+    throw Exception('Failed to load slots: ${response.body}');
   }
 
   static Future<List<dynamic>> getTrucks() async {
@@ -273,5 +274,17 @@ class ApiService {
       return jsonDecode(response.body) as List<dynamic>;
     }
     throw Exception('Failed to load bookings: ${response.body}');
+  }
+
+  static Future<List<dynamic>> getGates() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/gates/'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load gates: ${response.body}');
   }
 }

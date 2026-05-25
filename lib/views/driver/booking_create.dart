@@ -22,6 +22,13 @@ class _BookingCreateState extends State<BookingCreate> {
   List<dynamic> trucks = [];
   List<dynamic> shippingLines = [];
 
+  List<dynamic> gates = [];
+
+  int? selectedGateId;
+
+  bool loadingGates = true;
+  bool loadingSlots = false;
+
   int? selectedSlotId;
   int? selectedTruckId;
   int? selectedShippingLineId;
@@ -35,7 +42,43 @@ class _BookingCreateState extends State<BookingCreate> {
   @override
   void initState() {
     super.initState();
+    loadGates();
     loadData();
+  }
+
+  Future<void> loadGates() async {
+    try {
+      final data = await ApiService.getGates();
+      setState(() {
+        gates = data;
+        loadingGates = false;
+      });
+    } catch (e) {
+      setState(() {
+        loadingGates = false;
+      });
+    }
+  }
+
+  Future<void> loadSlotsForGate(int gateId) async {
+    try {
+      setState(() {
+        loadingSlots = true;
+        slots = [];
+        selectedSlotId = null;
+      });
+
+      final data = await ApiService.getSlots(gateId: gateId);
+
+      setState(() {
+        slots = data;
+        loadingSlots = false;
+      });
+    } catch (e) {
+      setState(() {
+        loadingSlots = false;
+      });
+    }
   }
 
   @override
@@ -48,20 +91,17 @@ class _BookingCreateState extends State<BookingCreate> {
   Future<void> loadData() async {
     try {
       final results = await Future.wait([
-        ApiService.getSlots(),
         ApiService.getTrucks(),
         ApiService.getShippingLines(),
       ]);
 
-      // Sort shipping lines alphabetically by name
-      List<dynamic> sortedLines = List.from(results[2]);
+      List<dynamic> sortedLines = List.from(results[1]);
       sortedLines.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));
 
       if (!mounted) return;
       setState(() {
-        slots = results[0];
-        trucks = results[1];
-        shippingLines = sortedLines; // ✅ Sorted A-Z
+        trucks = results[0];
+        shippingLines = sortedLines;
         loading = false;
       });
     } catch (e) {
@@ -530,30 +570,66 @@ class _BookingCreateState extends State<BookingCreate> {
                       const SizedBox(height: 14),
 
                       _fieldCard(
+                        icon: Icons.apartment,
+                        title: 'Gate',
+                        child: loadingGates
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: CircularProgressIndicator(),
+                              )
+                            : DropdownButtonFormField<int>(
+                                value: selectedGateId,
+                                decoration: _inputDecoration(),
+                                isExpanded: true,
+                                items: gates.map((gate) {
+                                  return DropdownMenuItem<int>(
+                                    value: gate['id'],
+                                    child: Text(gate['name'].toString()),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedGateId = value;
+                                  });
+
+                                  if (value != null) {
+                                    loadSlotsForGate(value);
+                                  }
+                                },
+                              ),
+                      ),
+
+                      _fieldCard(
                         icon: Icons.calendar_month,
                         title: 'Slot',
-                        child: DropdownButtonFormField<int>(
-                          initialValue: selectedSlotId,
-                          decoration: _inputDecoration(),
-                          isExpanded:
-                              true, // <-- this helps the dropdown take full width
-                          items: slots.map((slot) {
-                            final gate = slot['gate']?['name'] ?? 'Gate';
-                            final date = formatDate(slot['start_time']);
-                            final start = formatTime(slot['start_time']);
-                            final end = formatTime(slot['end_time']);
-                            return DropdownMenuItem<int>(
-                              value: slot['id'],
-                              child: Text(
-                                '$gate | $date | $start-$end',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
+                        child: loadingSlots
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: CircularProgressIndicator(),
+                              )
+                            : DropdownButtonFormField<int>(
+                                value: selectedSlotId,
+                                decoration: _inputDecoration(),
+                                isExpanded: true,
+                                items: slots.map((slot) {
+                                  final gate = slot['gate']?['name'] ?? 'Gate';
+                                  final date = formatDate(slot['start_time']);
+                                  final start = formatTime(slot['start_time']);
+                                  final end = formatTime(slot['end_time']);
+
+                                  return DropdownMenuItem<int>(
+                                    value: slot['id'],
+                                    child: Text(
+                                      '$gate | $date | $start - $end',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() => selectedSlotId = value);
+                                },
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (value) =>
-                              setState(() => selectedSlotId = value),
-                        ),
                       ),
 
                       const SizedBox(height: 14),
