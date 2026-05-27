@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "98283626750",
+    "project_id": "bandariflow",
+    "storage_bucket": "bandariflow.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:98283626750:android:dfab244b577b2845c785af",
+        "android_client_info": {
+          "package_name": "com.example.bandariflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBP7EUdWdb4sU8a-GNXGP2K91vQbjLf0IQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

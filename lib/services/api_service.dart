@@ -306,4 +306,23 @@ class ApiService {
       return [];
     }
   }
+
+  static Future<void> uploadFCMToken(String token) async {
+    try {
+      final headers = await authHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/driver/update-fcm/'),
+        headers: headers,
+        body: jsonEncode({'fcm_token': token}),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('FCM Token uploaded to Django successfully!');
+      } else {
+        debugPrint(' Failed to upload token: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('FCM Sync Network Error: $e');
+    }
+  }
 }
