@@ -848,6 +848,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                       'GPS Ready',
                                       style: TextStyle(
                                         color: Color(0xFF0A2342),
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -855,9 +856,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                     SizedBox(height: 8),
                                     Text(
                                       'Your location: ${_currentPosition?.latitude.toStringAsFixed(5)}, ${_currentPosition?.longitude.toStringAsFixed(5)}',
+                                      style: TextStyle(fontSize: 17),
                                     ),
                                     Text(
                                       'Gate location: ${gateLat.toStringAsFixed(5)}, ${gateLng.toStringAsFixed(5)}',
+                                      style: TextStyle(fontSize: 17),
                                     ),
 
                                     SizedBox(
