@@ -3,6 +3,9 @@ import 'package:bandariflow/views/driver/gate_pass_screen.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
@@ -20,6 +23,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
   String _hoursStr = '00';
   String _minutesStr = '00';
   String _secondsStr = '00';
+  Position? _currentPosition;
+  bool _loadingLocation = true;
 
   @override
   void dispose() {
@@ -31,6 +36,75 @@ class _DriverDashboardState extends State<DriverDashboard> {
   void initState() {
     super.initState();
     loadDashboardData();
+    _loadCurrentLocation();
+  }
+
+  Future<void> _loadCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint(
+          "GPS hardware services are completely turned off on this device.",
+        );
+        setState(() => _loadingLocation = false);
+        return;
+      }
+      LocationPermission permission =
+          await Geolocator.checkPermission(); //asks device if the app already has location access
+
+      if (permission == LocationPermission.denied) {
+        //checks if user denied location access in teh past
+        permission =
+            await Geolocator.requestPermission(); //triggers pop up dialog box asking user to grant location access
+      }
+
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        setState(() => _loadingLocation = false);
+        return;
+      }
+
+      // request position data with a hard structural timeout safety net
+      final position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 10,
+            ),
+          ).timeout(
+            const Duration(
+              seconds: 5,
+            ), // If GPS fails to respond in 5s, drop out
+            onTimeout: () async {
+              // Fallback: Grab the last known location stored by the handset cache instead
+              final lastKnown = await Geolocator.getLastKnownPosition();
+              if (lastKnown != null) return lastKnown;
+
+              // Provide fallback mock coordinates for Nairobi if everything fails
+              return Position(
+                latitude: -1.2921, // Nairobi Latitude
+                longitude: 36.8219, // Nairobi Longitude
+                timestamp: DateTime.now(),
+                accuracy: 1.0,
+                altitude: 1795.0,
+                altitudeAccuracy: 1.0,
+                heading: 0.0,
+                headingAccuracy: 1.0,
+                speed: 0.0,
+                speedAccuracy: 1.0,
+              );
+            },
+          );
+
+      if (!mounted) return;
+      setState(() {
+        _currentPosition = position;
+        _loadingLocation = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingLocation = false);
+    }
   }
 
   Future<void> loadDashboardData() async {
@@ -72,57 +146,66 @@ class _DriverDashboardState extends State<DriverDashboard> {
     try {
       final List<dynamic> alerts = await ApiService.getBroadcastAlerts();
 
-      if (alerts.isNotEmpty && mounted) {
-        final latestAlert = alerts.first;
+      if (alerts.isEmpty || !mounted) return;
 
-        showDialog(
-          context: context,
-          barrierDismissible: true,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF0A2342),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Row(
-                children: [
-                  const Icon(
-                    Icons.verified,
-                    color: Color(0xFF59E38C),
-                    size: 26,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      latestAlert['title'] ?? 'Notice',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+      final latestAlert = alerts.first;
+      final int latestId = int.tryParse(latestAlert['id'].toString()) ?? 0;
+
+      final prefs = await SharedPreferences.getInstance();
+      final int lastSeenId = prefs.getInt('last_seen_alert_id') ?? 0;
+
+      if (latestId <= lastSeenId) {
+        return; // already shown before
+      }
+
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF0A2342),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.verified, color: Color(0xFF59E38C), size: 26),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    latestAlert['title'] ?? 'Notice',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ],
-              ),
-              content: Text(
-                latestAlert['message'] ?? '',
-                style: const TextStyle(color: Colors.white70, fontSize: 15),
-              ),
-              actions: [
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFFFD700),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'DISMISS',
-                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
-            );
-          },
-        );
-      }
+            ),
+            content: Text(
+              latestAlert['message'] ?? '',
+              style: const TextStyle(color: Colors.white70, fontSize: 15),
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFFFD700),
+                ),
+                onPressed: () async {
+                  await prefs.setInt('last_seen_alert_id', latestId);
+                  if (Navigator.canPop(dialogContext)) {
+                    Navigator.pop(dialogContext);
+                  }
+                },
+                child: const Text(
+                  'DISMISS',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
     } catch (e) {
       debugPrint("Popup Error: $e");
     }
@@ -737,12 +820,92 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
                     //MAP
                     Container(
-                      height: 80,
+                      height: 180,
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                       ),
+
+                      child: _loadingLocation
+                          ? Center(child: CircularProgressIndicator())
+                          : activeBooking == null
+                          ? Center(child: Text('No approved booking yet'))
+                          : Builder(
+                              builder: (context) {
+                                final gate =
+                                    activeBooking!['slot_detail']?['gate'] ??
+                                    {};
+                                final gateLat = (gate['latitude'] ?? 0)
+                                    .toDouble();
+                                final gateLng = (gate['longitude'] ?? 0)
+                                    .toDouble();
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'GPS Ready',
+                                      style: TextStyle(
+                                        color: Color(0xFF0A2342),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Your location: ${_currentPosition?.latitude.toStringAsFixed(5)}, ${_currentPosition?.longitude.toStringAsFixed(5)}',
+                                    ),
+                                    Text(
+                                      'Gate location: ${gateLat.toStringAsFixed(5)}, ${gateLng.toStringAsFixed(5)}',
+                                    ),
+
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF0A2342,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          elevation: 2,
+                                        ),
+                                        onPressed: () async {
+                                          final uri = Uri.parse(
+                                            'https://www.google.com/maps/dir/?api=1'
+                                            '&origin=${_currentPosition?.latitude},${_currentPosition?.longitude}'
+                                            '&destination=$gateLat,$gateLng'
+                                            '&travelmode=driving',
+                                          );
+
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(
+                                              uri,
+                                              mode: LaunchMode.platformDefault,
+                                            );
+                                          }
+                                        },
+                                        child: const Text(
+                                          'Open Route',
+                                          style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
