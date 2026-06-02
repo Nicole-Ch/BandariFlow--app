@@ -325,4 +325,16 @@ class ApiService {
       debugPrint('FCM Sync Network Error: $e');
     }
   }
+
+  static Future<List<dynamic>> getYardCapacities() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/yard-capacity/'),
+      headers: await authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to load yard capacity');
+  }
 }

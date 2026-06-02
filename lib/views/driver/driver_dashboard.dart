@@ -25,6 +25,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
   String _secondsStr = '00';
   Position? _currentPosition;
   bool _loadingLocation = true;
+  List<dynamic> yardCapacities = [];
+  bool loadingHeatmap = true;
 
   @override
   void dispose() {
@@ -37,6 +39,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
     super.initState();
     loadDashboardData();
     _loadCurrentLocation();
+    loadHeatmapData();
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -211,6 +214,22 @@ class _DriverDashboardState extends State<DriverDashboard> {
     }
   }
 
+  Future<void> loadHeatmapData() async {
+    try {
+      final data = await ApiService.getYardCapacities();
+      if (!mounted) return;
+      setState(() {
+        yardCapacities = data;
+        loadingHeatmap = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        loadingHeatmap = false;
+      });
+    }
+  }
+
   void _startCountdown(dynamic startTimeStr) {
     _countdownTimer?.cancel(); // Clear any existing clock track
     if (startTimeStr == null) return;
@@ -252,6 +271,111 @@ class _DriverDashboardState extends State<DriverDashboard> {
         });
       }
     });
+  }
+
+  Widget _buildHeatmap() {
+    if (loadingHeatmap) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (yardCapacities.isEmpty) {
+      return const Center(
+        child: Text(
+          'System Offline: No Yard Data',
+          style: TextStyle(color: Colors.white54),
+        ),
+      );
+    }
+
+    List<dynamic> sortedYards = List.from(yardCapacities);
+    sortedYards.sort((a, b) {
+      final aTotal = (a['quota_total'] ?? 0) as num;
+      final aReserved = (a['quota_reserved'] ?? 0) as num;
+      final aRatio = aTotal == 0 ? 0.0 : aReserved / aTotal;
+
+      final bTotal = (b['quota_total'] ?? 0) as num;
+      final bReserved = (b['quota_reserved'] ?? 0) as num;
+      final bRatio = bTotal == 0 ? 0.0 : bReserved / bTotal;
+
+      return aRatio.compareTo(bRatio); // Sorts from Low (Green) -> High (Red)
+    });
+
+    // Limit to 10 visual blocks to prevent UI overflow
+    final maxVisible = sortedYards.length > 10 ? 10 : sortedYards.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Clear (Low)',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            const Text(
+              'Full (High)',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(maxVisible, (index) {
+            final yard = sortedYards[index];
+
+            final total = (yard['quota_total'] ?? 12) as num;
+            final reserved = (yard['quota_reserved'] ?? 0) as num;
+            final ratio = total == 0 ? 0.0 : reserved / total;
+
+            // Traffic Color Logic
+            Color color;
+            if (ratio <= 0.33) {
+              color = const Color(0xFF43A047);
+            } else if (ratio <= 0.66) {
+              color = const Color(0xFFFFB300);
+            } else {
+              color = const Color(0xFFE53935);
+            }
+
+            final gateName = yard['gate']?['name']?.toString() ?? 'Gate';
+            final percentUsed = (ratio * 100).toStringAsFixed(0);
+
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Tooltip(
+                  message: '$gateName\n$percentUsed% Full ($reserved/$total)',
+                  child: Container(
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
   }
 
   @override
@@ -584,29 +708,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: const [
-                      _HeatBox(color: Color(0xFFE53935)),
-                      _HeatBox(color: Color(0xFFEF5350)),
-                      _HeatBox(color: Color(0xFFFFD54F)),
-                      _HeatBox(color: Color(0xFFFFEB3B)),
-                      _HeatBox(color: Color(0xFF8BC34A)),
-                      _HeatBox(color: Color(0xFF4CAF50)),
-                      _HeatBox(color: Color(0xFFE53935)),
-                      _HeatBox(color: Color(0xFFFFC107)),
-                      _HeatBox(color: Color(0xFFCDDC39)),
-                      _HeatBox(color: Color(0xFF43A047)),
-                    ],
-                  ),
+                  _buildHeatmap(),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Text(
-                        'Low',
-                        style: TextStyle(color: Colors.black54, fontSize: 12),
-                      ),
                       const Spacer(),
                       Container(
                         height: 6,
@@ -623,10 +728,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
                         ),
                       ),
                       const Spacer(),
-                      const Text(
-                        'High',
-                        style: TextStyle(color: Colors.black54, fontSize: 12),
-                      ),
                     ],
                   ),
                 ],
