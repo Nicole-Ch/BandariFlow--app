@@ -27,17 +27,28 @@ class _LoginScreenState extends State<LoginScreen> {
         password: passwordController.text.trim(),
       );
 
-      print('LOGIN SUCCESS: $result');
-      await Future.delayed(const Duration(milliseconds: 100));
+      final role = (result['role'] ?? '').toString().toLowerCase();
 
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/dashboard',
-        (route) => false,
-      );
+
+      if (role == 'admin' || role == 'supervisor') {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/adminDashboard',
+          (route) => false,
+        );
+      } else if (role == 'driver') {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/dashboard',
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unknown role. Contact support.')),
+        );
+      }
     } catch (e) {
-      print('LOGIN ERROR: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));

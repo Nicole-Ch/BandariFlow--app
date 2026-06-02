@@ -1,3 +1,4 @@
+import 'package:bandariflow/views/admin/admin_dashboard.dart';
 import 'package:bandariflow/views/auth/login_screen.dart';
 import 'package:bandariflow/views/auth/register_screen.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
@@ -62,6 +63,7 @@ class BandariFlowApp extends StatelessWidget {
         '/dashboard': (context) => const DriverDashboard(),
         '/gatepass': (context) => const MyTicketsPage(),
         '/profile': (context) => const ProfilePage(),
+        '/adminDashboard': (context) => const AdminDashboard(),
       },
     );
   }

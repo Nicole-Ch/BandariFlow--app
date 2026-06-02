@@ -81,7 +81,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       await saveToken(data['access']);
       return data;
     } else {

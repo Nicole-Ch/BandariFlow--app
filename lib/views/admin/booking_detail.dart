@@ -18,7 +18,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     setState(() => isProcessing = true);
 
     try {
-      // Calls your backend: /api/bookings/{id}/update_status/
       await ApiService.updateBookingStatus(widget.booking['id'], decision);
 
       if (!mounted) return;
@@ -97,6 +96,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     final slot = booking['slot_detail'] ?? {};
     final status = (booking['status'] ?? 'pending').toString().toLowerCase();
     final isPending = status == 'pending';
+    final shippingLine = booking['shippingline_detail'] ?? {};
+    final shippingLineName = shippingLine['name']?.toString() ?? 'Unknown';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -121,9 +122,20 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                   children: [
                     _row('Container No.', booking['container_number'] ?? '--'),
                     const Divider(),
-                    _row('Cargo Type', booking['cargo_type'] ?? 'Standard'),
+                    _row(
+                      'Cargo Type',
+                      booking['cargo_type']?.toString() ?? 'Standard',
+                    ),
                     const Divider(),
-                    _row('Driver', booking['driver_name'] ?? 'Unknown'),
+                    _row(
+                      'Driver',
+                      booking['driver']?['fullname']?.toString() ??
+                          booking['driver']?['user']?['username']?.toString() ??
+                          'Unknown',
+                    ),
+
+                    const Divider(),
+                    _row('Shipping Line', shippingLineName),
                   ],
                 ),
               ),
@@ -214,8 +226,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 color: status == 'approved'
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.1),
                 child: Text(
                   "This booking is ${status.toUpperCase()}",
                   textAlign: TextAlign.center,
@@ -238,7 +250,13 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color.fromARGB(255, 65, 62, 62),
+              fontSize: 16,
+            ),
+          ),
           Text(
             value,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

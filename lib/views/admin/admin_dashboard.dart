@@ -1,6 +1,7 @@
 import 'package:bandariflow/views/admin/booking_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:bandariflow/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -45,6 +46,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
       .where((b) => (b['status'] ?? '').toString().toLowerCase() == 'approved')
       .toList();
 
+  Future<void> _Logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Do you really want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('access_token');
+
+    if (!mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,6 +83,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
         title: const Text('Admin Dashboard'),
         backgroundColor: const Color(0xFF0A2342),
         foregroundColor: Colors.white,
+
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _Logout,
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
