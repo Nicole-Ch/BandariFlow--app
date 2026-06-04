@@ -14,7 +14,10 @@ class DriverDashboard extends StatefulWidget {
   State<DriverDashboard> createState() => _DriverDashboardState();
 }
 
-class _DriverDashboardState extends State<DriverDashboard> {
+class _DriverDashboardState extends State<DriverDashboard>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   List<dynamic> bookings = [];
   Map<String, dynamic>? activeBooking;
   bool loading = true;
@@ -38,8 +41,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
   void initState() {
     super.initState();
     loadDashboardData();
-    _loadCurrentLocation();
-    loadHeatmapData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCurrentLocation();
+      loadHeatmapData();
+    });
   }
 
   Future<void> _loadCurrentLocation() async {

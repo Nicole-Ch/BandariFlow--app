@@ -1,31 +1,24 @@
-import 'package:bandariflow/views/driver/profile_page.dart';
-import 'package:bandariflow/views/driver/booking_create.dart';
-import 'package:bandariflow/views/driver/tickets_page.dart';
 import 'package:flutter/material.dart';
-import '../driver_dashboard.dart';
-
-
-
+import 'package:bandariflow/views/driver/booking_create.dart';
+import 'package:bandariflow/views/driver/driver_dashboard.dart';
+import 'package:bandariflow/views/driver/profile_page.dart';
+import 'package:bandariflow/views/driver/tickets_page.dart';
 
 class DriverBottomNav extends StatelessWidget {
   final int currentIndex;
 
-  const DriverBottomNav({
-    super.key,
-    required this.currentIndex,
-  });
+  const DriverBottomNav({super.key, required this.currentIndex});
 
   void _goToPage(BuildContext context, int index) {
     if (index == currentIndex) return;
 
     Widget page;
-
     switch (index) {
       case 0:
         page = const DriverDashboard();
         break;
       case 1:
-        page = BookingCreate();
+        page = const BookingCreate();
         break;
       case 2:
         page = const MyTicketsPage();
@@ -37,10 +30,7 @@ class DriverBottomNav extends StatelessWidget {
         page = const DriverDashboard();
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
   }
 
   @override
