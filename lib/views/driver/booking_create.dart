@@ -1,11 +1,11 @@
 import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:file_picker/file_picker.dart';
-
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:bandariflow/views/driver/tickets_page.dart';
 
 class BookingCreate extends StatefulWidget {
   const BookingCreate({super.key});
@@ -21,7 +21,6 @@ class _BookingCreateState extends State<BookingCreate> {
   List<dynamic> slots = [];
   List<dynamic> trucks = [];
   List<dynamic> shippingLines = [];
-
   List<dynamic> gates = [];
 
   int? selectedGateId;
@@ -38,6 +37,9 @@ class _BookingCreateState extends State<BookingCreate> {
 
   bool loading = true;
   String? error;
+
+  bool bookingCreated = false;
+  bool documentUploaded = false;
 
   @override
   void initState() {
@@ -117,12 +119,22 @@ class _BookingCreateState extends State<BookingCreate> {
     if (await Permission.storage.request().isGranted) {
       return true;
     } else {
-      // Show a dialog explaining why you need permission
       return false;
     }
   }
 
   Future<void> submitBooking() async {
+    if (bookingCreated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Booking already created. Upload the document to continue.',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (selectedSlotId == null ||
         selectedTruckId == null ||
         selectedShippingLineId == null ||
@@ -145,24 +157,23 @@ class _BookingCreateState extends State<BookingCreate> {
         manifestNumber: manifestNumberController.text.trim(),
       );
 
+      if (!mounted) return;
       setState(() {
         createdBookingId = result['id'];
+        bookingCreated = true;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Booking created! You can now upload documents.'),
+          content: Text(
+            'Booking created successfully. Upload supporting documents to complete submission.',
+          ),
         ),
-      );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking created successfully')),
       );
 
       debugPrint('Booking created: $result');
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -185,11 +196,9 @@ class _BookingCreateState extends State<BookingCreate> {
 
   void _showAddTruckDialog() {
     final plateController = TextEditingController();
-    bool isCertified = false; // Tracks if the user ticked the legal check box
-    String?
-    selectedFileName; // Stores the name of our file starts as completely empty/null
-    bool isUploading =
-        false; // Tracks if a loading animation wheel should spin right now
+    bool isCertified = false;
+    String? selectedFileName;
+    bool isUploading = false;
 
     showDialog(
       context: context,
@@ -223,8 +232,6 @@ class _BookingCreateState extends State<BookingCreate> {
                     style: TextStyle(fontSize: 14, color: Colors.black),
                   ),
                   const SizedBox(height: 16),
-
-                  // Truck Lisence Input Field
                   TextField(
                     controller: plateController,
                     enabled: !isUploading,
@@ -237,16 +244,12 @@ class _BookingCreateState extends State<BookingCreate> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // MOCK DOCUMENT UPLOAD FIELD THAT SIMULATES FILE PICKER
                   InkWell(
-                    onTap:
-                        isUploading // if isUploading is true, the button becomes null (disabled). If it is false, it executes the function.
+                    onTap: isUploading
                         ? null
                         : () async {
                             setDialogState(() => isUploading = true);
 
-                            // Simulate file picker loading
                             await Future.delayed(
                               const Duration(milliseconds: 800),
                             );
@@ -298,8 +301,6 @@ class _BookingCreateState extends State<BookingCreate> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Security Checkbox Accordance
                   CheckboxListTile(
                     title: const Text(
                       "I certify that this truck is officially leased or owned by my registered company transport fleet.",
@@ -333,7 +334,6 @@ class _BookingCreateState extends State<BookingCreate> {
                   backgroundColor: const Color(0xFF0A2342),
                   foregroundColor: Colors.white,
                 ),
-                // Button only activates if text is typed, file is "uploaded", and box checked!
                 onPressed:
                     (!isCertified ||
                         selectedFileName == null ||
@@ -343,32 +343,44 @@ class _BookingCreateState extends State<BookingCreate> {
                     : () async {
                         setDialogState(() => isUploading = true);
 
-                        await Future.delayed(
-                          const Duration(milliseconds: 1500),
-                        );
+                        try {
+                          final plate = plateController.text
+                              .trim()
+                              .toUpperCase();
 
-                        if (!mounted) return;
-                        Navigator.pop(context); // Close popup window
+                          await ApiService.updateDriverProfile(
+                            truckPlate: plate,
+                          );
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              '🔒 Truck document verified & linked successfully!',
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                          final updatedTrucks = await ApiService.getTrucks();
 
-                        // Inject the mock plate entry right into the Flutter dropdown state tree array
-                        setState(() {
-                          trucks.add({
-                            'id': DateTime.now().millisecondsSinceEpoch,
-                            'license_plate': plateController.text
-                                .trim()
-                                .toUpperCase(),
+                          if (!mounted) return;
+                          setState(() {
+                            trucks = updatedTrucks;
+                            selectedTruckId = updatedTrucks.isNotEmpty
+                                ? updatedTrucks.first['id']
+                                : null;
                           });
-                          selectedTruckId = trucks.last['id']; // Auto-select it
-                        });
+
+                          if (!mounted) return;
+                          Navigator.pop(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Truck linked successfully'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Truck link failed: $e')),
+                          );
+                        } finally {
+                          if (mounted) {
+                            setDialogState(() => isUploading = false);
+                          }
+                        }
                       },
                 child: isUploading
                     ? const SizedBox(
@@ -386,6 +398,57 @@ class _BookingCreateState extends State<BookingCreate> {
         },
       ),
     );
+  }
+
+  Future<void> _uploadBookingDocumentAndGoHome() async {
+    if (createdBookingId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please submit the booking first, then upload documents.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (result == null) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Uploading document...')));
+
+    try {
+      await ApiService.uploadBookingDocument(
+        bookingId: createdBookingId!,
+        file: File(result.files.single.path!),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        documentUploaded = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document uploaded successfully!')),
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MyTicketsPage()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    }
   }
 
   @override
@@ -455,64 +518,25 @@ class _BookingCreateState extends State<BookingCreate> {
                               child: SizedBox(
                                 height: 47,
                                 child: ElevatedButton(
-                                  onPressed: () async {
-                                    // First, ensure a booking exists (user must have submitted form first)
-                                    if (createdBookingId == null) {
+                                  onPressed: () {
+                                    if (!bookingCreated) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         SnackBar(
                                           content: const Text(
-                                            'Please submit the booking first, then upload documents.',
+                                            'Please submit the booking first before uploading documents.',
                                           ),
-                                          backgroundColor: Colors.grey[850],
+                                          backgroundColor: const Color(
+                                            0xFF1E1E1E,
+                                          ).withAlpha(230), // 90% opacity
+                                          // Material Grey 900
                                         ),
                                       );
                                       return;
                                     }
 
-                                    // Open file picker directly
-                                    // Open file picker directly (Configured for PDFs)
-                                    FilePickerResult? result = await FilePicker
-                                        .platform
-                                        .pickFiles(
-                                          type: FileType.custom,
-                                          allowedExtensions: ['pdf'],
-                                        );
-                                    if (result == null) return;
-
-                                    // Show uploading indicator
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Uploading document...'),
-                                      ),
-                                    );
-
-                                    try {
-                                      await ApiService.uploadBookingDocument(
-                                        bookingId: createdBookingId!,
-                                        // Pass the selected PDF path into the File object
-                                        file: File(result.files.single.path!),
-                                      );
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Document uploaded successfully!',
-                                          ),
-                                        ),
-                                      );
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Upload failed: $e'),
-                                        ),
-                                      );
-                                    }
+                                    _uploadBookingDocumentAndGoHome();
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF2F6FD6),
@@ -554,7 +578,6 @@ class _BookingCreateState extends State<BookingCreate> {
                       const SizedBox(height: 18),
                       const Divider(height: 1),
                       const SizedBox(height: 18),
-
                       _fieldCard(
                         icon: Icons.confirmation_num_outlined,
                         title: 'Container Number',
@@ -566,9 +589,7 @@ class _BookingCreateState extends State<BookingCreate> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 14),
-
                       _fieldCard(
                         icon: Icons.apartment,
                         title: 'Gate',
@@ -598,7 +619,6 @@ class _BookingCreateState extends State<BookingCreate> {
                                 },
                               ),
                       ),
-
                       _fieldCard(
                         icon: Icons.calendar_month,
                         title: 'Slot',
@@ -631,16 +651,13 @@ class _BookingCreateState extends State<BookingCreate> {
                                 },
                               ),
                       ),
-
                       const SizedBox(height: 14),
-
                       _fieldCard(
                         icon: Icons.local_shipping_rounded,
                         title: 'Truck',
                         child: trucks.isEmpty
                             ? InkWell(
-                                onTap:
-                                    _showAddTruckDialog, // 👈 Opens your verification popup
+                                onTap: _showAddTruckDialog,
                                 child: Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
@@ -679,7 +696,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                 ),
                               )
                             : DropdownButtonFormField<int>(
-                                initialValue: selectedTruckId,
+                                value: selectedTruckId,
                                 decoration: _inputDecoration(),
                                 items: trucks.map((truck) {
                                   return DropdownMenuItem<int>(
@@ -689,19 +706,19 @@ class _BookingCreateState extends State<BookingCreate> {
                                     ),
                                   );
                                 }).toList(),
-                                onChanged: (value) {
-                                  setState(() => selectedTruckId = value);
-                                },
+                                onChanged: bookingCreated
+                                    ? null
+                                    : (value) {
+                                        setState(() => selectedTruckId = value);
+                                      },
                               ),
                       ),
-
                       const SizedBox(height: 14),
-
                       _fieldCard(
                         icon: Icons.apartment,
                         title: 'Shipping Line',
                         child: DropdownButtonFormField<int>(
-                          initialValue: selectedShippingLineId,
+                          value: selectedShippingLineId,
                           decoration: _inputDecoration(),
                           items: shippingLines.map((line) {
                             return DropdownMenuItem<int>(
@@ -709,14 +726,16 @@ class _BookingCreateState extends State<BookingCreate> {
                               child: Text(line['name'] ?? 'Shipping Line'),
                             );
                           }).toList(),
-                          onChanged: (value) {
-                            setState(() => selectedShippingLineId = value);
-                          },
+                          onChanged: bookingCreated
+                              ? null
+                              : (value) {
+                                  setState(
+                                    () => selectedShippingLineId = value,
+                                  );
+                                },
                         ),
                       ),
-
                       const SizedBox(height: 14),
-
                       _fieldCard(
                         icon: Icons.scale,
                         title: 'Container Status',
@@ -726,19 +745,19 @@ class _BookingCreateState extends State<BookingCreate> {
                             isEmpty ? 'Empty Container' : 'Full Container',
                           ),
                           value: isEmpty,
-                          onChanged: (value) {
-                            setState(() => isEmpty = value);
-                          },
+                          onChanged: bookingCreated
+                              ? null
+                              : (value) {
+                                  setState(() => isEmpty = value);
+                                },
                         ),
                       ),
-
                       const SizedBox(height: 14),
-
                       _fieldCard(
                         icon: Icons.swap_horiz,
                         title: 'Direction',
                         child: DropdownButtonFormField<String>(
-                          initialValue: direction,
+                          value: direction,
                           decoration: _inputDecoration(),
                           items: const [
                             DropdownMenuItem(
@@ -754,16 +773,16 @@ class _BookingCreateState extends State<BookingCreate> {
                               child: Text('Empty Return'),
                             ),
                           ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() => direction = value);
-                            }
-                          },
+                          onChanged: bookingCreated
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(() => direction = value);
+                                  }
+                                },
                         ),
                       ),
-
                       const SizedBox(height: 14),
-
                       _fieldCard(
                         icon: Icons.notes_rounded,
                         title: 'Manifest Number',
@@ -775,13 +794,12 @@ class _BookingCreateState extends State<BookingCreate> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 13),
                       SizedBox(
                         width: double.infinity,
                         height: 49,
                         child: ElevatedButton(
-                          onPressed: submitBooking,
+                          onPressed: bookingCreated ? null : submitBooking,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2F6FD6),
                             foregroundColor: Colors.white,
@@ -790,15 +808,25 @@ class _BookingCreateState extends State<BookingCreate> {
                             ),
                             elevation: 0,
                           ),
-                          child: const Text(
-                            'Submit Booking',
-                            style: TextStyle(
+                          child: Text(
+                            bookingCreated
+                                ? 'Booking Submitted'
+                                : 'Submit Booking',
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ),
+                      if (bookingCreated) ...[
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Booking created. Upload the document above to finish and return to the dashboard.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.black54, fontSize: 13),
+                        ),
+                      ],
                     ],
                   ),
                 ),

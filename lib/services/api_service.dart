@@ -126,45 +126,45 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> updateDriverProfile({
-    required String fullName,
-    required String phone,
-    required String idNumber,
-    required String licenseNumber,
-    required String truckPlate,
-    File? imageFile, // This accepts the image file from your image picker
+    String? fullName,
+    String? phone,
+    String? idNumber,
+    String? licenseNumber,
+    String? truckPlate,
+    File? imageFile,
   }) async {
-    // Create a PATCH multipart request
     final url = Uri.parse('$baseUrl/driver/profile/');
     final request = http.MultipartRequest('PATCH', url);
 
-    // Fetch and apply your authentication headers
     final headers = await authHeaders();
-
     headers.remove('Content-Type');
     request.headers.addAll(headers);
 
-    //  Attach text form fields
-    request.fields['fullname'] = fullName;
-    request.fields['phone'] = phone;
-    request.fields['id_number'] = idNumber;
-    request.fields['license_number'] = licenseNumber;
-    request.fields['preferred_truck'] = truckPlate;
+    if (fullName != null && fullName.trim().isNotEmpty) {
+      request.fields['fullname'] = fullName.trim();
+    }
+    if (phone != null && phone.trim().isNotEmpty) {
+      request.fields['phone'] = phone.trim();
+    }
+    if (idNumber != null && idNumber.trim().isNotEmpty) {
+      request.fields['id_number'] = idNumber.trim();
+    }
+    if (licenseNumber != null && licenseNumber.trim().isNotEmpty) {
+      request.fields['license_number'] = licenseNumber.trim();
+    }
+    if (truckPlate != null && truckPlate.trim().isNotEmpty) {
+      request.fields['preferred_truck'] = truckPlate.trim();
+    }
 
-    // Attach the image file if it is selected
     if (imageFile != null) {
       request.files.add(
-        await http.MultipartFile.fromPath(
-          'photo', // This key name MUST exactly match your Django model/serializer field name
-          imageFile.path,
-        ),
+        await http.MultipartFile.fromPath('photo', imageFile.path),
       );
     }
 
-    // Send the streaming request to  Django API
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
-    //  Handle the server response status
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
@@ -338,14 +338,12 @@ class ApiService {
     throw Exception('Failed to load yard capacity');
   }
 
-  // In lib/services/api_service.dart
-
   static Future<void> updateBookingStatus(int id, String status) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
 
     final response = await http.patch(
-      Uri.parse('$baseUrl/bookings/$id/'), // Or your specific endpoint
+      Uri.parse('$baseUrl/bookings/$id/update-status/'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -354,7 +352,33 @@ class ApiService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to update status');
+      throw Exception('Failed to update status: ${response.body}');
     }
+  }
+
+  static Future<Map<String, dynamic>> scanGatePass({
+    required String qrToken,
+    double? scannerLat,
+    double? scannerLon,
+    String deviceInfo = '',
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/gate-scan/'),
+      headers: await authHeaders(),
+      body: jsonEncode({
+        'qr_token': qrToken,
+        'scanner_lat': scannerLat,
+        'scanner_lon': scannerLon,
+        'device_info': deviceInfo,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return data as Map<String, dynamic>;
+    }
+
+    throw Exception(data['detail']?.toString() ?? 'Scan failed');
   }
 }

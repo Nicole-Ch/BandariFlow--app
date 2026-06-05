@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bandariflow/services/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BookingDetailPage extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -12,6 +13,20 @@ class BookingDetailPage extends StatefulWidget {
 
 class _BookingDetailPageState extends State<BookingDetailPage> {
   bool isProcessing = false;
+
+  String _formatDirection(dynamic value) {
+    final text = value?.toString() ?? '';
+    switch (text) {
+      case 'import_pickup':
+        return 'Import Pickup';
+      case 'export_dropoff':
+        return 'Export Drop-Off';
+      case 'empty_return':
+        return 'Empty Return';
+      default:
+        return text;
+    }
+  }
 
   // Function to call API and update status
   Future<void> _updateStatus(String decision) async {
@@ -39,55 +54,34 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     }
   }
 
-  void _viewDocument() {
-    // Check if a URL exists. If your backend sends a full URL, use it directly.
-    final url = widget.booking['manifest_url'];
+  void _viewDocument() async {
+    final docs = (widget.booking['documents'] as List<dynamic>?) ?? [];
 
-    if (url == null) {
+    if (docs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No document attached to this booking")),
       );
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppBar(
-              title: const Text("Cargo Manifest"),
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-            SizedBox(
-              height: 400,
-              width: double.infinity,
-              child: Image.network(
-                url,
-                fit: BoxFit.contain,
-                loadingBuilder: (ctx, child, progress) {
-                  if (progress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
-                },
-                errorBuilder: (ctx, error, stack) => const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                      Text("Could not load image"),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final rawUrl = docs.first['file']?.toString();
+
+    if (rawUrl == null || rawUrl.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Document link is missing")));
+      return;
+    }
+
+    final uri = Uri.parse(
+      rawUrl.startsWith('http') ? rawUrl : 'http://10.0.2.2:8000$rawUrl',
     );
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open the document")),
+      );
+    }
   }
 
   @override
@@ -136,6 +130,12 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
                     const Divider(),
                     _row('Shipping Line', shippingLineName),
+
+                    const Divider(),
+                    _row(
+                      'Direction',
+                      _formatDirection(booking['direction'] ?? 'import_pickup'),
+                    ),
                   ],
                 ),
               ),

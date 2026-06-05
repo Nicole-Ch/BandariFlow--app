@@ -43,6 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
           '/dashboard',
           (route) => false,
         );
+      }
+      if (role == 'gatestaff') {
+        Navigator.pushReplacementNamed(context, '/scanner');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Unknown role. Contact support.')),
