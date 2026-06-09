@@ -832,7 +832,6 @@ class _BookingCreateState extends State<BookingCreate> {
                 ),
               ),
             ),
-      bottomNavigationBar: const DriverBottomNav(currentIndex: 1),
     );
   }
 

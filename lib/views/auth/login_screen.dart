@@ -37,24 +37,39 @@ class _LoginScreenState extends State<LoginScreen> {
           '/adminDashboard',
           (route) => false,
         );
-      } else if (role == 'driver') {
+      } else if (role == 'gatestaff') {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/scanner',
+          (route) => false,
+        );
+      } else {
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/dashboard',
           (route) => false,
         );
       }
-      if (role == 'gatestaff') {
-        Navigator.pushReplacementNamed(context, '/scanner');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unknown role. Contact support.')),
-        );
-      }
     } catch (e) {
+      final errorText = e.toString().toLowerCase();
+
+      String message = 'Login failed. Please check your email and password.';
+
+      if (errorText.contains('no active account found')) {
+        message = 'Incorrect email or password.';
+      } else if (errorText.contains('disabled')) {
+        message = 'This account is disabled. Please contact support.';
+      } else if (errorText.contains('role')) {
+        message =
+            'Your account role is not set correctly. Please contact support.';
+      }
+
+      debugPrint('LOGIN ERROR: $e');
+
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 

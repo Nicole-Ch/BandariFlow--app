@@ -44,7 +44,6 @@ class _DriverDashboardState extends State<DriverDashboard>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCurrentLocation();
-      loadHeatmapData();
     });
   }
 
@@ -138,6 +137,11 @@ class _DriverDashboardState extends State<DriverDashboard>
 
       if (approvedBooking != null) {
         _startCountdown(approvedBooking['slot_detail']?['start_time']);
+
+        final gateId = approvedBooking['slot_detail']?['gate']?['id'];
+        await loadHeatmapData(gateId: gateId);
+      } else {
+        await loadHeatmapData();
       }
 
       // Check for broadcast alerts right after loading completes
@@ -220,9 +224,9 @@ class _DriverDashboardState extends State<DriverDashboard>
     }
   }
 
-  Future<void> loadHeatmapData() async {
+  Future<void> loadHeatmapData({int? gateId}) async {
     try {
-      final data = await ApiService.getYardCapacities();
+      final data = await ApiService.getYardCapacities(gateId: gateId);
       if (!mounted) return;
       setState(() {
         yardCapacities = data;

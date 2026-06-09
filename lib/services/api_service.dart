@@ -326,11 +326,12 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> getYardCapacities() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/yard-capacity/'),
-      headers: await authHeaders(),
-    );
+  static Future<List<dynamic>> getYardCapacities({int? gateId}) async {
+    final uri = gateId == null
+        ? Uri.parse('$baseUrl/yard-capacity/')
+        : Uri.parse('$baseUrl/yard-capacity/?gate_id=$gateId');
+
+    final response = await http.get(uri, headers: await authHeaders());
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
