@@ -13,11 +13,13 @@ import 'views/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  runApp(const BandariFlowApp());
 
   try {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    await Firebase.initializeApp();
 
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
     await messaging.requestPermission(alert: true, badge: true, sound: true);
 
     await FirebaseMessaging.instance
@@ -30,14 +32,13 @@ void main() async {
     final fcmToken = await messaging.getToken();
 
     if (fcmToken != null) {
-      await ApiService.uploadFCMToken(fcmToken);
       debugPrint("FCM TOKEN: $fcmToken");
+      // This network request will no longer block app startup
+      await ApiService.uploadFCMToken(fcmToken);
     }
   } catch (e) {
     debugPrint("FCM init failed: $e");
   }
-
-  runApp(const BandariFlowApp());
 }
 
 class BandariFlowApp extends StatelessWidget {

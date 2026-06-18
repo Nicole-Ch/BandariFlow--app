@@ -118,7 +118,13 @@ class _DriverDashboardState extends State<DriverDashboard>
   Future<void> loadDashboardData() async {
     try {
       final data = await ApiService.getBookings();
+
       Map<String, dynamic>? approvedBooking;
+      Map<String, dynamic>? latestBooking;
+
+      if (data.isNotEmpty) {
+        latestBooking = Map<String, dynamic>.from(data.first);
+      }
 
       for (final b in data) {
         final status = (b['status'] ?? '').toString().toLowerCase();
@@ -127,6 +133,8 @@ class _DriverDashboardState extends State<DriverDashboard>
           break;
         }
       }
+
+      final bookingForHeatmap = approvedBooking ?? latestBooking;
 
       if (!mounted) return;
       setState(() {
@@ -137,20 +145,25 @@ class _DriverDashboardState extends State<DriverDashboard>
 
       if (approvedBooking != null) {
         _startCountdown(approvedBooking['slot_detail']?['start_time']);
-
-        final gateId = approvedBooking['slot_detail']?['gate']?['id'];
-        await loadHeatmapData(gateId: gateId);
-      } else {
-        await loadHeatmapData();
       }
 
-      // Check for broadcast alerts right after loading completes
+      final gateId = bookingForHeatmap?['slot_detail']?['gate']?['id'];
+      if (gateId != null) {
+        await loadHeatmapData(gateId: gateId);
+      } else {
+        if (!mounted) return;
+        setState(() {
+          loadingHeatmap = false;
+        });
+      }
+
       await checkForBroadcastAlerts();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         loading = false;
         activeBooking = null;
+        loadingHeatmap = false;
       });
     }
   }
@@ -227,6 +240,17 @@ class _DriverDashboardState extends State<DriverDashboard>
   Future<void> loadHeatmapData({int? gateId}) async {
     try {
       final data = await ApiService.getYardCapacities(gateId: gateId);
+
+      if (data.isEmpty && gateId != null) {
+        final fallbackData = await ApiService.getYardCapacities();
+        if (!mounted) return;
+        setState(() {
+          yardCapacities = fallbackData;
+          loadingHeatmap = false;
+        });
+        return;
+      }
+
       if (!mounted) return;
       setState(() {
         yardCapacities = data;
@@ -241,14 +265,14 @@ class _DriverDashboardState extends State<DriverDashboard>
   }
 
   void _startCountdown(dynamic startTimeStr) {
-    _countdownTimer?.cancel(); // Clear any existing clock track
+    _countdownTimer?.cancel();
     if (startTimeStr == null) return;
 
     DateTime? targetTime;
     try {
       targetTime = DateTime.parse(startTimeStr.toString()).toLocal();
     } catch (_) {
-      return; // Stop if string format cannot parse
+      return;
     }
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -256,28 +280,28 @@ class _DriverDashboardState extends State<DriverDashboard>
       final difference = targetTime!.difference(now);
 
       if (difference.isNegative) {
-        // Driver is inside or past their entry slot threshold
+        timer.cancel();
+        _countdownTimer?.cancel();
+
         if (mounted) {
           setState(() {
             _hoursStr = '00';
             _minutesStr = '00';
             _secondsStr = '00';
-            _countdownTimer?.cancel();
           });
         }
         return;
       }
 
-      // Convert difference duration down into block segments
-      final hours = difference.inHours;
-      final minutes = difference.inMinutes.remainder(60);
-      final seconds = difference.inSeconds.remainder(60);
-
       if (mounted) {
         setState(() {
-          _hoursStr = hours.toString().padLeft(2, '0');
-          _minutesStr = minutes.toString().padLeft(2, '0');
-          _secondsStr = seconds.toString().padLeft(2, '0');
+          _hoursStr = difference.inHours.toString().padLeft(2, '0');
+          _minutesStr = (difference.inMinutes.remainder(
+            60,
+          )).toString().padLeft(2, '0');
+          _secondsStr = (difference.inSeconds.remainder(
+            60,
+          )).toString().padLeft(2, '0');
         });
       }
     });
@@ -390,6 +414,7 @@ class _DriverDashboardState extends State<DriverDashboard>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final booking = activeBooking;
     final slot = booking?['slot_detail'] ?? {};
 

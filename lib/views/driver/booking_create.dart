@@ -599,7 +599,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                 child: CircularProgressIndicator(),
                               )
                             : DropdownButtonFormField<int>(
-                                value: selectedGateId,
+                                initialValue: selectedGateId,
                                 decoration: _inputDecoration(),
                                 isExpanded: true,
                                 items: gates.map((gate) {
@@ -628,7 +628,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                 child: CircularProgressIndicator(),
                               )
                             : DropdownButtonFormField<int>(
-                                value: selectedSlotId,
+                                initialValue: selectedSlotId,
                                 decoration: _inputDecoration(),
                                 isExpanded: true,
                                 items: slots.map((slot) {
@@ -696,7 +696,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                 ),
                               )
                             : DropdownButtonFormField<int>(
-                                value: selectedTruckId,
+                                initialValue: selectedTruckId,
                                 decoration: _inputDecoration(),
                                 items: trucks.map((truck) {
                                   return DropdownMenuItem<int>(
@@ -718,7 +718,7 @@ class _BookingCreateState extends State<BookingCreate> {
                         icon: Icons.apartment,
                         title: 'Shipping Line',
                         child: DropdownButtonFormField<int>(
-                          value: selectedShippingLineId,
+                          initialValue: selectedShippingLineId,
                           decoration: _inputDecoration(),
                           items: shippingLines.map((line) {
                             return DropdownMenuItem<int>(
@@ -757,7 +757,7 @@ class _BookingCreateState extends State<BookingCreate> {
                         icon: Icons.swap_horiz,
                         title: 'Direction',
                         child: DropdownButtonFormField<String>(
-                          value: direction,
+                          initialValue: direction,
                           decoration: _inputDecoration(),
                           items: const [
                             DropdownMenuItem(

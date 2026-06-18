@@ -1,5 +1,6 @@
 import 'package:bandariflow/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   bool obscurePassword = true;
+  bool isLoading = false;
   @override
   void dispose() {
     emailController.dispose();
@@ -21,6 +23,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> loginUser() async {
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
     try {
       final result = await ApiService.login(
         email: emailController.text.trim(),
@@ -28,6 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final role = (result['role'] ?? '').toString().toLowerCase();
+
+      try {
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          await ApiService.uploadFCMToken(fcmToken);
+        }
+      } catch (e) {
+        debugPrint('FCM upload failed: $e');
+      }
 
       if (!mounted) return;
 
@@ -51,8 +68,13 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      final errorText = e.toString().toLowerCase();
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
 
+      final errorText = e.toString().toLowerCase();
       String message = 'Login failed. Please check your email and password.';
 
       if (errorText.contains('no active account found')) {
