@@ -51,7 +51,6 @@ class ApiService {
         (prefs) => prefs.remove('access_token'),
       );
 
-      // Redirect to login screen safely
       navigatorKey.currentState?.pushNamedAndRemoveUntil(
         '/login',
         (route) => false,

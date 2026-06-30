@@ -1,4 +1,5 @@
 import 'package:bandariflow/views/admin/booking_detail.dart';
+import 'package:bandariflow/views/admin/widgets/admin_bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:bandariflow/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -236,6 +237,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
             ),
+
+      bottomNavigationBar: const AdminBottomNav(currentIndex: 0),
     );
   }
 
