@@ -21,7 +21,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> loadYardActivity() async {
     try {
+      print("Loading yard capacities...");
+
       final data = await ApiService.getYardCapacities();
+
+      print("Received ${data.length} yard capacity records");
 
       if (!mounted) return;
 
@@ -29,7 +33,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         yardCapacities = data;
         loadingHeatmap = false;
       });
-    } catch (_) {
+    } catch (e) {
+      print("Yard capacity error: $e");
+
       if (!mounted) return;
 
       setState(() {
@@ -195,45 +201,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   const SizedBox(height: 25),
 
+                  //YARD UTILIZATION
                   const Text(
-                    'Incoming Booking Requests',
+                    "Current Yard Utilization",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
 
-                  const SizedBox(height: 12),
-                  ...bookings.map((booking) {
-                    final status = (booking['status'] ?? '').toString();
-                    final container =
-                        booking['container_number']?.toString() ?? '--';
-                    final slot = booking['slot_detail'] ?? {};
-                    final gate = slot['gate']?['name']?.toString() ?? '--';
-                    final start = slot['start_time']?.toString() ?? '--';
-                    final end = slot['end_time']?.toString() ?? '--';
+                  const SizedBox(height: 15),
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        title: Text(container),
-                        subtitle: Text(
-                          '$gate • ${_formatTime(start)} - ${_formatTime(end)}',
-                        ),
-                        trailing: Text(status.toUpperCase()),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  BookingDetailPage(booking: booking),
-                            ),
-                          ).then((_) {
-                            // When they come back from the detail page, refresh the list
-                            // so the approved item moves from Pending to Approved!
-                            loadBookings();
-                          });
-                        },
-                      ),
-                    );
-                  }),
+                  if (loadingHeatmap)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    _yardUtilizationCard(),
                 ],
               ),
             ),
@@ -264,34 +243,92 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
-}
 
-Widget _statCard(String title, String value, IconData icon, Color color) {
-  return Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
-      boxShadow: [
-        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
-      ],
-    ),
-    child: Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.15),
-          child: Icon(icon, color: color),
+  Widget _yardUtilizationCard() {
+    if (yardCapacities.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        child: const Center(
+          child: Text(
+            "No yard capacity data available.",
+            style: TextStyle(fontSize: 16),
+          ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(title),
-      ],
-    ),
-  );
+      );
+    }
+
+    int total = 0;
+    int reserved = 0;
+
+    for (final yard in yardCapacities) {
+      total += yard["quota_total"] as int;
+      reserved += yard["quota_reserved"] as int;
+    }
+
+    final double percent = total == 0
+        ? 0.0
+        : reserved.toDouble() / total.toDouble();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black12)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "${(percent * 100).toStringAsFixed(1)}% Yard Occupied",
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 15),
+
+          LinearProgressIndicator(
+            value: percent,
+            minHeight: 12,
+            borderRadius: BorderRadius.circular(20),
+          ),
+
+          const SizedBox(height: 15),
+
+          Text(
+            "$reserved containers occupying space out of $total available slots.",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withValues(alpha: 0.15),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(title),
+        ],
+      ),
+    );
+  }
 }
 
 String _formatTime(dynamic value) {

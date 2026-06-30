@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../admin_dashboard.dart';
-import '../bookings_page.dart';
-import '../alerts_page.dart';
+import '../booking_page.dart';
+import '../admin_alerts.dart';
 import '../admin_profile.dart';
 
 class AdminBottomNav extends StatelessWidget {

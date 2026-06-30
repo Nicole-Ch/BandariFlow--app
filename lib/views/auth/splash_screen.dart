@@ -1,3 +1,5 @@
+import 'package:bandariflow/services/api_service.dart';
+import 'package:bandariflow/views/admin/admin_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:ui';
@@ -20,18 +22,54 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkToken() async {
+    //  Give the splash animation 2 seconds to display smoothly
     await Future.delayed(const Duration(seconds: 2));
+
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
 
     if (!mounted) return;
 
-    if (token != null && token.isNotEmpty) {
+    //  If no token exists, navigate straight to the login screen
+    if (token == null || token.isEmpty) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DriverDashboard()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-    } else {
+      return;
+    }
+
+    try {
+      print("=== SPLASH CHECK: Token found. Verifying user role... ===");
+
+      //  Request the profile details from Django
+      final profile = await ApiService.getDriverProfile();
+
+      //  Safely extract the role parameter from your nested user object
+      final role = profile['user']?['role']?.toString().toLowerCase();
+      print("=== SPLASH CHECK: Found user role: $role ===");
+
+      if (!mounted) return;
+
+      //  Navigate based on their actual account permissions
+      if (role == 'admin') {
+        print("=== SPLASH CHECK: Routing to Admin Dashboard ===");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
+        );
+      } else {
+        print("=== SPLASH CHECK: Routing to Driver Dashboard ===");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DriverDashboard()),
+        );
+      }
+    } catch (e) {
+      print("=== SPLASH CHECK ERROR: Profile check failed: $e ===");
+
+      //  If the token is invalid or a network failure occurs, fall back to login
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
