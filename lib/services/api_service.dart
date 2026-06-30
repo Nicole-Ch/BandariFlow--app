@@ -365,14 +365,33 @@ class ApiService {
         ? Uri.parse('$baseUrl/yard-capacity/')
         : Uri.parse('$baseUrl/yard-capacity/?gate_id=$gateId');
 
-    final response = await http.get(uri, headers: await authHeaders());
+    print("========== YARD API ==========");
+    print("Calling: $uri");
 
-    _handleResponse(response); // Global intercept
+    try {
+      final headers = await authHeaders();
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as List<dynamic>;
+      print("Headers: $headers");
+
+      final response = await http.get(uri, headers: headers);
+
+      print("Status Code: ${response.statusCode}");
+      print("Body:");
+      print(response.body);
+
+      _handleResponse(response);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      throw Exception(response.body);
+    } catch (e, stack) {
+      print("NETWORK EXCEPTION:");
+      print(e);
+      print(stack);
+      rethrow;
     }
-    throw Exception('Failed to load yard capacity');
   }
 
   static Future<void> updateBookingStatus(int id, String status) async {

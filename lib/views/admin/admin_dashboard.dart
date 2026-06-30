@@ -18,7 +18,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<dynamic> yardCapacities = [];
   bool loadingHeatmap = true;
-
   Future<void> loadYardActivity() async {
     try {
       print("Loading yard capacities...");
@@ -246,59 +245,81 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _yardUtilizationCard() {
     if (yardCapacities.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        child: const Center(
-          child: Text(
-            "No yard capacity data available.",
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      );
+      return const Center(child: Text("No yard capacity data available."));
     }
 
-    int total = 0;
-    int reserved = 0;
+    final Map<String, Map<String, int>> gateStats = {};
 
     for (final yard in yardCapacities) {
-      total += yard["quota_total"] as int;
-      reserved += yard["quota_reserved"] as int;
+      final gateName = yard["gate"]["name"];
+
+      gateStats.putIfAbsent(gateName, () => {"total": 0, "reserved": 0});
+
+      gateStats[gateName]!["total"] =
+          gateStats[gateName]!["total"]! + (yard["quota_total"] as int);
+
+      gateStats[gateName]!["reserved"] =
+          gateStats[gateName]!["reserved"]! + (yard["quota_reserved"] as int);
     }
 
-    final double percent = total == 0
-        ? 0.0
-        : reserved.toDouble() / total.toDouble();
+    return Column(
+      children: gateStats.entries.map((entry) {
+        final total = entry.value["total"]!;
+        final reserved = entry.value["reserved"]!;
+        final percent = total == 0 ? 0.0 : reserved / total;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black12)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "${(percent * 100).toStringAsFixed(1)}% Yard Occupied",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Color progressColor;
+
+        if (percent >= 0.8) {
+          progressColor = Colors.red;
+        } else if (percent >= 0.6) {
+          progressColor = Colors.orange;
+        } else {
+          progressColor = Colors.green;
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 15),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black12)],
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                entry.key,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
 
-          const SizedBox(height: 15),
+              const SizedBox(height: 10),
 
-          LinearProgressIndicator(
-            value: percent,
-            minHeight: 12,
-            borderRadius: BorderRadius.circular(20),
+              Text(
+                "${(percent * 100).toStringAsFixed(1)}% occupied",
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+
+              const SizedBox(height: 10),
+
+              LinearProgressIndicator(
+                value: percent,
+                minHeight: 12,
+                borderRadius: BorderRadius.circular(20),
+                color: progressColor,
+              ),
+
+              const SizedBox(height: 10),
+
+              Text("$reserved of $total slots occupied"),
+            ],
           ),
-
-          const SizedBox(height: 15),
-
-          Text(
-            "$reserved containers occupying space out of $total available slots.",
-          ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 
