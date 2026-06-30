@@ -200,15 +200,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
 
                   const SizedBox(height: 12),
-                  const Text(
-                    'Incoming Bookings',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0A2342),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   ...bookings.map((booking) {
                     final status = (booking['status'] ?? '').toString();
                     final container =
@@ -285,7 +276,7 @@ Widget _statCard(String title, String value, IconData icon, Color color) {
     child: Column(
       children: [
         CircleAvatar(
-          backgroundColor: color.withOpacity(.15),
+          backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(icon, color: color),
         ),
         const SizedBox(height: 10),
