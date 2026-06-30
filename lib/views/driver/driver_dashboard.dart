@@ -117,7 +117,9 @@ class _DriverDashboardState extends State<DriverDashboard>
 
   Future<void> loadDashboardData() async {
     try {
+      print("=== DEBUG 1: Fetching Bookings ===");
       final data = await ApiService.getBookings();
+      print("=== DEBUG 2: Bookings received, total: ${data.length} ===");
 
       Map<String, dynamic>? approvedBooking;
       Map<String, dynamic>? latestBooking;
@@ -144,11 +146,13 @@ class _DriverDashboardState extends State<DriverDashboard>
       });
 
       if (approvedBooking != null) {
+        print("=== DEBUG 3: Starting Countdown ===");
         _startCountdown(approvedBooking['slot_detail']?['start_time']);
       }
 
       final gateId = bookingForHeatmap?['slot_detail']?['gate']?['id'];
       if (gateId != null) {
+        print("=== DEBUG 4: Loading Heatmap for Gate $gateId ===");
         await loadHeatmapData(gateId: gateId);
       } else {
         if (!mounted) return;
@@ -157,8 +161,11 @@ class _DriverDashboardState extends State<DriverDashboard>
         });
       }
 
+      print("=== DEBUG 5: Checking Broadcasts ===");
       await checkForBroadcastAlerts();
+      print("=== DEBUG 6: Dashboard fully loaded successfully! ===");
     } catch (e) {
+      print("=== DEBUG ERROR caught in dashboard: $e ===");
       if (!mounted) return;
       setState(() {
         loading = false;

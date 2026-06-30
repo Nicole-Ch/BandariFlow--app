@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'package:bandariflow/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -36,6 +37,26 @@ class ApiService {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  static void _handleResponse(http.Response response) {
+    if (response.statusCode == 401 ||
+        response.body.contains("token_not_valid")) {
+      print(
+        "=== GLOBAL AUTH INTERCEPTOR: Token expired! Clearing cache & forcing logout ===",
+      );
+
+      // Clear token cache
+      SharedPreferences.getInstance().then(
+        (prefs) => prefs.remove('access_token'),
+      );
+
+      // Redirect to login screen safely
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/login',
+        (route) => false,
+      );
+    }
   }
 
   static Future<Map<String, dynamic>> createBooking({
@@ -203,6 +224,8 @@ class ApiService {
       headers: await authHeaders(),
     );
 
+    _handleResponse(response); // Global intercept
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
     }
@@ -239,6 +262,8 @@ class ApiService {
       body: jsonEncode(body),
     );
 
+    _handleResponse(response); // Global intercept
+
     if (response.statusCode == 201) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
@@ -259,6 +284,8 @@ class ApiService {
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
+    _handleResponse(response); // Global intercept
+
     if (response.statusCode != 201) {
       throw Exception('Failed to upload: ${response.body}');
     }
@@ -269,6 +296,8 @@ class ApiService {
       Uri.parse('$baseUrl/bookings/'),
       headers: await authHeaders(),
     );
+
+    _handleResponse(response); // Global intercept
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -281,6 +310,8 @@ class ApiService {
       Uri.parse('$baseUrl/gates/'),
       headers: await authHeaders(),
     );
+
+    _handleResponse(response); // Global intercept
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -296,6 +327,8 @@ class ApiService {
         Uri.parse('$baseUrl/broadcasts/'),
         headers: headers,
       );
+
+      _handleResponse(response); // Global intercept
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
@@ -316,6 +349,8 @@ class ApiService {
         body: jsonEncode({'fcm_token': token}),
       );
 
+      _handleResponse(response); // Global intercept
+
       if (response.statusCode == 200) {
         debugPrint('FCM Token uploaded to Django successfully!');
       } else {
@@ -332,6 +367,8 @@ class ApiService {
         : Uri.parse('$baseUrl/yard-capacity/?gate_id=$gateId');
 
     final response = await http.get(uri, headers: await authHeaders());
+
+    _handleResponse(response); // Global intercept
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -351,6 +388,8 @@ class ApiService {
       },
       body: jsonEncode({'status': status}),
     );
+
+    _handleResponse(response); // Global intercept
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update status: ${response.body}');
@@ -373,6 +412,8 @@ class ApiService {
         'device_info': deviceInfo,
       }),
     );
+
+    _handleResponse(response); // Global intercept
 
     final data = jsonDecode(response.body);
 

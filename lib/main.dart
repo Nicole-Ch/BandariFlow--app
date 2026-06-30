@@ -11,6 +11,9 @@ import 'package:bandariflow/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'views/auth/splash_screen.dart';
 
+// ✅ STEP 1: Add this global key right here at the top level
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -33,7 +36,6 @@ void main() async {
 
     if (fcmToken != null) {
       debugPrint("FCM TOKEN: $fcmToken");
-      // This network request will no longer block app startup
       await ApiService.uploadFCMToken(fcmToken);
     }
   } catch (e) {
@@ -47,6 +49,8 @@ class BandariFlowApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // ✅ STEP 2: Link the global key to your MaterialApp configuration
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'BandariFlow',
       theme: ThemeData(

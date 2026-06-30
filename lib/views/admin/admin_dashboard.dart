@@ -15,10 +15,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
   bool loading = true;
   String? error;
 
+  List<dynamic> yardCapacities = [];
+  bool loadingHeatmap = true;
+
+  Future<void> loadYardActivity() async {
+    try {
+      final data = await ApiService.getYardCapacities();
+
+      if (!mounted) return;
+
+      setState(() {
+        yardCapacities = data;
+        loadingHeatmap = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        loadingHeatmap = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     loadBookings();
+    loadYardActivity();
   }
 
   Future<void> loadBookings() async {
@@ -114,6 +137,70 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
+                    'Yard Activity Overview',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0A2342),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          "Pending",
+                          pendingBookings.length.toString(),
+                          Icons.pending_actions,
+                          Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _statCard(
+                          "Approved",
+                          approvedBookings.length.toString(),
+                          Icons.check_circle,
+                          Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          "Total Bookings",
+                          bookings.length.toString(),
+                          Icons.local_shipping,
+                          Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _statCard(
+                          "Today's Activity",
+                          bookings.length.toString(),
+                          Icons.timeline,
+                          Colors.purple,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  const Text(
+                    'Incoming Booking Requests',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 12),
+                  const Text(
                     'Incoming Bookings',
                     style: TextStyle(
                       fontSize: 18,
@@ -183,6 +270,34 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
+}
+
+Widget _statCard(String title, String value, IconData icon, Color color) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      boxShadow: [
+        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+      ],
+    ),
+    child: Column(
+      children: [
+        CircleAvatar(
+          backgroundColor: color.withOpacity(.15),
+          child: Icon(icon, color: color),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(title),
+      ],
+    ),
+  );
 }
 
 String _formatTime(dynamic value) {
