@@ -13,8 +13,24 @@ final TextEditingController messageController = TextEditingController();
 String priority = 'Normal';
 String selectedTarget = 'all';
 
+String? selectedGate;
+List<String> selectedDrivers = [];
+
 class _AlertsPageState extends State<AlertsPage> {
   @override
+  final List<Map<String, dynamic>> gates = [
+    {"id": 1, "name": "Berth 8 Gate"},
+    {"id": 2, "name": "Gate 6"},
+    {"id": 3, "name": "Gate 7"},
+    {"id": 4, "name": "Shimanzi Gate"},
+  ];
+
+  final List<Map<String, dynamic>> drivers = [
+    {"id": 1, "fullname": "John Mwangi"},
+    {"id": 2, "fullname": "Brian Otieno"},
+    {"id": 3, "fullname": "James Kiptoo"},
+    {"id": 4, "fullname": "Faith Achieng"},
+  ];
   Color priorityColor(String priority) {
     switch (priority) {
       case "High":
@@ -221,7 +237,7 @@ class _AlertsPageState extends State<AlertsPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Radio<String>(
-                        value: "Gate8",
+                        value: "Custom",
                         activeColor: Color(0xFF0D47A1),
                       ),
                       Icon(Icons.people, size: 18, color: Colors.grey),
@@ -257,6 +273,67 @@ class _AlertsPageState extends State<AlertsPage> {
                 ],
               ),
             ),
+
+            if (selectedTarget == "Gate") ...[
+              const SizedBox(height: 15),
+
+              DropdownButtonFormField<String>(
+                value: selectedGate,
+                decoration: const InputDecoration(
+                  labelText: "Select Gate",
+                  border: OutlineInputBorder(),
+                ),
+
+                items: gates.map((gate) {
+                  return DropdownMenuItem<String>(
+                    value: gate["id"].toString(),
+                    child: Text(gate["name"]),
+                  );
+                }).toList(),
+
+                onChanged: (value) {
+                  setState(() {
+                    selectedGate = value;
+                  });
+                },
+              ),
+            ],
+
+            if (selectedTarget == "Custom") ...[
+              const SizedBox(height: 15),
+
+              const Text(
+                "Select Drivers",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+
+              const SizedBox(height: 10),
+
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: drivers.length,
+                itemBuilder: (context, index) {
+                  final driver = drivers[index];
+
+                  return CheckboxListTile(
+                    title: Text(driver["fullname"]),
+
+                    value: selectedDrivers.contains(driver["id"].toString()),
+
+                    onChanged: (checked) {
+                      setState(() {
+                        if (checked == true) {
+                          selectedDrivers.add(driver["id"].toString());
+                        } else {
+                          selectedDrivers.remove(driver["id"].toString());
+                        }
+                      });
+                    },
+                  );
+                },
+              ),
+            ],
 
             SizedBox(height: 15),
             Divider(),
