@@ -247,29 +247,6 @@ class _AlertsPageState extends State<AlertsPage> {
                   ),
 
                   SizedBox(height: 10),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      label: Text(
-                        "SEND ALERT",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0A2342),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: Icon(Icons.send),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -278,7 +255,7 @@ class _AlertsPageState extends State<AlertsPage> {
               const SizedBox(height: 15),
 
               DropdownButtonFormField<String>(
-                value: selectedGate,
+                initialValue: selectedGate,
                 decoration: const InputDecoration(
                   labelText: "Select Gate",
                   border: OutlineInputBorder(),
@@ -334,6 +311,26 @@ class _AlertsPageState extends State<AlertsPage> {
                 },
               ),
             ],
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () {},
+                label: Text(
+                  "SEND ALERT",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0A2342),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: Icon(Icons.send),
+              ),
+            ),
 
             SizedBox(height: 15),
             Divider(),
