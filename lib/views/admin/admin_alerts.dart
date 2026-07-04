@@ -15,6 +15,17 @@ String selectedTarget = 'all';
 
 class _AlertsPageState extends State<AlertsPage> {
   @override
+  Color priorityColor(String priority) {
+    switch (priority) {
+      case "High":
+        return Colors.red;
+      case "Low":
+        return Colors.green;
+      default:
+        return Colors.orange;
+    }
+  }
+
   final List<Map<String, dynamic>> sentAlerts = [
     {
       "title": "Heavy Traffic at Berth 8",
@@ -245,6 +256,114 @@ class _AlertsPageState extends State<AlertsPage> {
                   ),
                 ],
               ),
+            ),
+
+            SizedBox(height: 15),
+            Divider(),
+            SizedBox(height: 10),
+
+            Row(
+              children: [
+                Icon(Icons.history, color: Color(0xFF0A2342)),
+                SizedBox(width: 8),
+                Text(
+                  "Previously Sent Alerts",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 9),
+
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: sentAlerts.length,
+              itemBuilder: (context, index) {
+                final alert = sentAlerts[index];
+                return Card(
+                  margin: EdgeInsets.only(bottom: 14),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.notifications_active,
+                              color: priorityColor(alert["priority"]),
+                            ),
+
+                            SizedBox(width: 10),
+
+                            Expanded(
+                              child: Text(
+                                alert["title"] ?? "No Title",
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: priorityColor(
+                                  alert["priority"],
+                                ).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+
+                              child: Text(
+                                alert["priority"],
+                                style: TextStyle(
+                                  color: priorityColor(alert["priority"]),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 10),
+                        Text(alert["message"], style: TextStyle(fontSize: 15)),
+
+                        SizedBox(height: 7),
+                        Row(
+                          children: [
+                            Icon(Icons.group, size: 18, color: Colors.grey),
+                            SizedBox(width: 5),
+
+                            Text(
+                              alert['target'],
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+
+                            Spacer(),
+
+                            Text(
+                              alert["time"],
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
