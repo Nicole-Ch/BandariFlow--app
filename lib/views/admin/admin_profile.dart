@@ -64,20 +64,20 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 decoration: BoxDecoration(color: Color(0xFF0A2342)),
 
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(Icons.anchor, color: Colors.white, size: 30),
 
-                    Text(
-                      'Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        'Profile',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-
-                    Icon(Icons.notifications, color: Colors.white, size: 30),
                   ],
                 ),
               ),
