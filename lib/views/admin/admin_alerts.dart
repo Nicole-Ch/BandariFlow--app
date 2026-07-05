@@ -312,6 +312,7 @@ class _AlertsPageState extends State<AlertsPage> {
               ),
             ],
 
+            SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               height: 52,

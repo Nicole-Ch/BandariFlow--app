@@ -1,4 +1,5 @@
 import 'package:bandariflow/services/api_service.dart';
+import 'package:bandariflow/views/admin/update_admin_profile.dart';
 import 'package:bandariflow/views/driver/update_profile.dart';
 import 'package:bandariflow/views/admin/widgets/admin_bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -150,7 +151,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          UpdateProfilePage(profile: profile!),
+                          UpdateAdminProfilePage(profile: profile!),
                     ),
                   );
                   if (updated == true) {
@@ -208,9 +209,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                     SizedBox(height: 10),
 
                     _profileItem(
-                      icon: Icons.local_shipping_outlined,
-                      title: 'Truck',
-                      value: profile?['preferred_truck']?.toString() ?? '',
+                      icon: Icons.admin_panel_settings,
+                      title: 'Role',
+                      value: 'Administrator',
                     ),
 
                     SizedBox(height: 10),

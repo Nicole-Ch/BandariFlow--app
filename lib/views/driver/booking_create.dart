@@ -1,7 +1,6 @@
 import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
