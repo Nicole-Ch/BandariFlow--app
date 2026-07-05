@@ -1,3 +1,4 @@
+import 'package:bandariflow/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'widgets/admin_bottom_nav.dart';
 
@@ -42,23 +43,56 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
-  final List<Map<String, dynamic>> sentAlerts = [
-    {
-      "title": "Heavy Traffic at Berth 8",
-      "message":
-          "Drivers are advised to use Gate 6 due to congestion at Berth 8.",
-      "priority": "High",
-      "target": "All Drivers",
-      "time": "Today • 10:35 AM",
-    },
-    {
-      "title": "Maintenance Notice",
-      "message": "Gate 7 will close for maintenance at 3 PM.",
-      "priority": "Normal",
-      "target": "Gate 7",
-      "time": "Yesterday • 5:12 PM",
-    },
-  ];
+  Future<void> sendAlert() async {
+    try {
+      await ApiService.sendBroadcastAlert(
+        title: titleController.text,
+        message: messageController.text,
+        priority: priority,
+
+        targetRole: selectedTarget == "all" ? "driver" : null,
+
+        gateId: selectedTarget == "Gate" ? int.parse(selectedGate!) : null,
+      );
+
+      titleController.clear();
+      messageController.clear();
+
+      selectedGate = null;
+      selectedDrivers.clear();
+
+      await loadAlerts();
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Alert sent successfully")));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> loadAlerts() async {
+    try {
+      final alerts = await ApiService.getBroadcastAlerts();
+
+      setState(() {
+        sentAlerts = alerts;
+      });
+    } catch (e) {
+      debugPrint("Load Alerts Error: $e");
+    }
+  }
+
+  List<dynamic> sentAlerts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadAlerts();
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -71,7 +105,7 @@ class _AlertsPageState extends State<AlertsPage> {
               label: Text('3'),
               child: Icon(Icons.notifications, color: Colors.white),
             ),
-            onPressed: () {},
+            onPressed: sendAlert,
           ),
         ],
       ),
