@@ -318,27 +318,6 @@ class ApiService {
     throw Exception('Failed to load gates: ${response.body}');
   }
 
-  static Future<List<dynamic>> getBroadcastAlerts() async {
-    try {
-      final headers = await authHeaders();
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/broadcasts/'),
-        headers: headers,
-      );
-
-      _handleResponse(response); // Global intercept
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
-      }
-      throw Exception('Failed to load broadcasts: ${response.body}');
-    } catch (e) {
-      debugPrint('Broadcast Networking Sync Error: $e');
-      return [];
-    }
-  }
-
   static Future<void> uploadFCMToken(String token) async {
     try {
       final headers = await authHeaders();
@@ -440,5 +419,99 @@ class ApiService {
     }
 
     throw Exception(data['detail']?.toString() ?? 'Scan failed');
+  }
+
+  static Future<void> sendBroadcastAlert({
+    required String title,
+    required String message,
+    required String priority,
+    String? targetRole,
+    int? gateId,
+    List<int>? recipients,
+  }) async {
+    final token = await getToken();
+
+    final Map<String, dynamic> body = {
+      "title": title,
+      "message": message,
+      "priority": priority,
+    };
+
+    // All Drivers
+    if (targetRole != null) {
+      body["target_role"] = targetRole;
+    }
+
+    // Specific Gate
+    if (gateId != null) {
+      body["gate"] = gateId;
+    }
+
+    // Custom Selection
+    if (recipients != null && recipients.isNotEmpty) {
+      body["recipients"] = recipients;
+    }
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/broadcasts/create/"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception("Failed to send alert: ${response.body}");
+    }
+  }
+
+  // FETCHES PREVIOUSLY SENT ALERTS
+  static Future<List<dynamic>> getBroadcastAlerts() async {
+    final token = await getToken();
+
+    final response = await http.get(
+      Uri.parse("$baseUrl/broadcasts/"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load alerts");
+    }
+  }
+
+  static Future<void> createBroadcastAlert({
+    required String title,
+    required String message,
+    required String priority,
+    required String targetRole,
+    int? gateId,
+  }) async {
+    final headers = await authHeaders();
+
+    final body = {
+      "title": title,
+      "message": message,
+      "priority": priority,
+      "target_role": targetRole,
+      if (gateId != null) "gate": gateId,
+    };
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/broadcasts/create/'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+
+    _handleResponse(response);
+
+    if (response.statusCode != 201) {
+      throw Exception(response.body);
+    }
   }
 }
