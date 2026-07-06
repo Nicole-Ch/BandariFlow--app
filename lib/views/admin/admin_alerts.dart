@@ -134,14 +134,11 @@ class _AlertsPageState extends State<AlertsPage> {
         title: const Text("Admin Alerts"),
         backgroundColor: const Color(0xFF0A2342),
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Badge(
-              label: Text('3'),
-              child: Icon(Icons.notifications, color: Colors.white),
-            ),
-            onPressed: sendAlert,
-          ),
+        actions: const [
+          Icon(Icons.message, size: 24),
+          SizedBox(
+            width: 16,
+          ), // Gives the icon safe breathing room from the right edge
         ],
       ),
       body: SingleChildScrollView(
@@ -196,6 +193,8 @@ class _AlertsPageState extends State<AlertsPage> {
 
             TextField(
               controller: messageController,
+              maxLines: 5,
+              minLines: 3,
               decoration: InputDecoration(
                 hintText: "Type your message here",
                 contentPadding: EdgeInsets.symmetric(
