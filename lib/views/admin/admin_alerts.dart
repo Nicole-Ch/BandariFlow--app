@@ -134,12 +134,7 @@ class _AlertsPageState extends State<AlertsPage> {
         title: const Text("Admin Alerts"),
         backgroundColor: const Color(0xFF0A2342),
         foregroundColor: Colors.white,
-        actions: const [
-          Icon(Icons.message, size: 24),
-          SizedBox(
-            width: 16,
-          ), // Gives the icon safe breathing room from the right edge
-        ],
+        actions: const [Icon(Icons.message, size: 24), SizedBox(width: 16)],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),

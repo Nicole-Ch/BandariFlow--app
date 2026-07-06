@@ -539,4 +539,19 @@ class ApiService {
       throw Exception(response.body);
     }
   }
+
+  static Future<List<dynamic>> getGateScanLogs() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/security/scans/logs/'),
+      headers: await authHeaders(),
+    );
+
+    _handleResponse(response);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+
+    throw Exception('Failed to load gate scan logs: ${response.body}');
+  }
 }

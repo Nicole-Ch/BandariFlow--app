@@ -14,6 +14,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<dynamic> bookings = [];
   bool loading = true;
   String? error;
+  List<dynamic> gateScans = [];
+  bool loadingGateScans = true;
 
   List<dynamic> yardCapacities = [];
   bool loadingHeatmap = true;
@@ -44,6 +46,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     super.initState();
     loadBookings();
     loadYardActivity();
+    loadGateScans();
   }
 
   Future<void> loadBookings() async {
@@ -70,6 +73,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<dynamic> get approvedBookings => bookings
       .where((b) => (b['status'] ?? '').toString().toLowerCase() == 'approved')
       .toList();
+
+  int get todaysScans {
+    final today = DateTime.now();
+
+    return gateScans.where((scan) {
+      if (scan["scanned_at"] == null) return false;
+
+      final scannedDate = DateTime.parse(scan["scanned_at"]);
+
+      return scannedDate.year == today.year &&
+          scannedDate.month == today.month &&
+          scannedDate.day == today.day;
+    }).length;
+  }
 
   Future<void> _Logout() async {
     final confirm = await showDialog<bool>(
@@ -98,6 +115,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (!mounted) return;
 
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
+  Future<void> loadGateScans() async {
+    try {
+      final data = await ApiService.getGateScanLogs();
+
+      if (!mounted) return;
+
+      setState(() {
+        gateScans = data;
+        loadingGateScans = false;
+      });
+    } catch (e) {
+      debugPrint("Gate Scan Error: $e");
+
+      if (!mounted) return;
+
+      setState(() {
+        loadingGateScans = false;
+      });
+    }
   }
 
   @override
@@ -185,9 +223,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _statCard(
-                          "Today's Activity",
-                          bookings.length.toString(),
-                          Icons.timeline,
+                          "Today's Gate Scans",
+                          todaysScans.toString(),
+                          Icons.qr_code_scanner,
                           Colors.purple,
                         ),
                       ),
