@@ -19,12 +19,6 @@ List<String> selectedDrivers = [];
 
 class _AlertsPageState extends State<AlertsPage> {
   @override
-  final List<Map<String, dynamic>> drivers = [
-    {"id": 1, "fullname": "John Mwangi"},
-    {"id": 2, "fullname": "Brian Otieno"},
-    {"id": 3, "fullname": "James Kiptoo"},
-    {"id": 4, "fullname": "Faith Achieng"},
-  ];
   Color priorityColor(String priority) {
     switch (priority) {
       case "High":
@@ -326,23 +320,21 @@ class _AlertsPageState extends State<AlertsPage> {
               ),
             ),
 
+            // 1. DYNAMIC DROPDOWN FOR SPECIFIC GATE
             if (selectedTarget == "Gate") ...[
               const SizedBox(height: 15),
-
               DropdownButtonFormField<String>(
                 initialValue: selectedGate,
                 decoration: const InputDecoration(
-                  labelText: "Select Gate",
+                  labelText: "Select Target Gate",
                   border: OutlineInputBorder(),
                 ),
-
                 items: gates.map((gate) {
                   return DropdownMenuItem<String>(
                     value: gate["id"].toString(),
                     child: Text(gate["name"]),
                   );
                 }).toList(),
-
                 onChanged: (value) {
                   setState(() {
                     selectedGate = value;
@@ -351,39 +343,139 @@ class _AlertsPageState extends State<AlertsPage> {
               ),
             ],
 
+            // ALL DRIVERS
+            if (selectedTarget == "all") ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.campaign, color: Colors.blue.shade800, size: 26),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Global Broadcast Active",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Colors.blue.shade900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "This notification will hit all ${driver.length} registered system drivers simultaneously",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue.shade700,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            //CUSTOM SELECTION
             if (selectedTarget == "Custom") ...[
               const SizedBox(height: 15),
-
-              const Text(
-                "Select Drivers",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Select Targeted Drivers",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  if (_isLoadingDrivers)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
               ),
-
               const SizedBox(height: 10),
 
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: drivers.length,
-                itemBuilder: (context, index) {
-                  final driver = drivers[index];
+              if (driver.isEmpty && !_isLoadingDrivers)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    "No drivers loaded from your backend.",
+                    style: TextStyle(color: Colors.red.shade400, fontSize: 13),
+                  ),
+                ),
 
-                  return CheckboxListTile(
-                    title: Text(driver["fullname"]),
+              // We wrap the list in a constrained box with scrolling properties
+              // so it never over-extends your page layout forms boundaries!
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight:
+                      MediaQuery.of(context).size.height *
+                      0.25, // Locks height to max 25% of the screen
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: driver.length,
+                  itemBuilder: (context, index) {
+                    final currentDriver = driver[index];
 
-                    value: selectedDrivers.contains(driver["id"].toString()),
+                    final String driverId = currentDriver["id"].toString();
 
-                    onChanged: (checked) {
-                      setState(() {
-                        if (checked == true) {
-                          selectedDrivers.add(driver["id"].toString());
-                        } else {
-                          selectedDrivers.remove(driver["id"].toString());
-                        }
-                      });
-                    },
-                  );
-                },
+                    String driverNames = "Port Driver #$driverId";
+
+                    if (currentDriver["fullname"] != null &&
+                        currentDriver["fullname"].toString().isNotEmpty) {
+                      driverNames = currentDriver["fullname"].toString();
+                    } else if (currentDriver["fullname"] != null &&
+                        currentDriver["fullname"].toString().isNotEmpty) {
+                      driverNames = currentDriver["fullname"].toString();
+                    } else if (currentDriver["user"] != null &&
+                        currentDriver["user"]["username"] != null) {
+                      driverNames = currentDriver["user"]["username"]
+                          .toString();
+                    } else if (currentDriver["user_email"] != null) {
+                      driverNames = currentDriver["user_email"].toString();
+                    }
+
+                    return CheckboxListTile(
+                      activeColor: const Color(0xFF0D47A1),
+                      contentPadding:
+                          EdgeInsets.zero, // Eliminates padding leaks
+                      title: Text(
+                        driverNames,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      value: selectedDrivers.contains(driverId),
+                      onChanged: (bool? checked) {
+                        setState(() {
+                          if (checked == true) {
+                            selectedDrivers.add(driverId);
+                          } else {
+                            selectedDrivers.remove(driverId);
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
               ),
             ],
 
@@ -392,7 +484,7 @@ class _AlertsPageState extends State<AlertsPage> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: sendAlert,
                 label: Text(
                   "SEND ALERT",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -431,6 +523,21 @@ class _AlertsPageState extends State<AlertsPage> {
               itemCount: sentAlerts.length,
               itemBuilder: (context, index) {
                 final alert = sentAlerts[index];
+
+                final String rawPriority = alert["priority"] ?? "Normal";
+                final String targetAudience =
+                    alert["target_role"]?.toString().toUpperCase() ?? "DRIVERS";
+
+                // Formats Django '2026-07-06T05:47:38Z' timestamp down to a clean date string slice
+                String alertTimestamp = "Recent";
+                if (alert["sent_at"] != null) {
+                  try {
+                    alertTimestamp = alert["sent_at"].toString().substring(
+                      0,
+                      10,
+                    ); // Extracts 'YYYY-MM-DD'
+                  } catch (_) {}
+                }
                 return Card(
                   margin: EdgeInsets.only(bottom: 14),
                   elevation: 2,
@@ -469,7 +576,7 @@ class _AlertsPageState extends State<AlertsPage> {
                               decoration: BoxDecoration(
                                 color: priorityColor(
                                   alert["priority"],
-                                ).withValues(alpha: 0.15),
+                                ).withAlpha(38),
                                 borderRadius: BorderRadius.circular(20),
                               ),
 
@@ -485,7 +592,10 @@ class _AlertsPageState extends State<AlertsPage> {
                         ),
 
                         SizedBox(height: 10),
-                        Text(alert["message"], style: TextStyle(fontSize: 15)),
+                        Text(
+                          alert["message"] ?? "",
+                          style: TextStyle(fontSize: 15),
+                        ),
 
                         SizedBox(height: 7),
                         Row(
@@ -494,7 +604,7 @@ class _AlertsPageState extends State<AlertsPage> {
                             SizedBox(width: 5),
 
                             Text(
-                              alert['target'],
+                              "Target: $targetAudience",
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -504,7 +614,7 @@ class _AlertsPageState extends State<AlertsPage> {
                             Spacer(),
 
                             Text(
-                              alert["time"],
+                              alertTimestamp,
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],

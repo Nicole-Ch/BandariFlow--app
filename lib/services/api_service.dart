@@ -448,7 +448,7 @@ class ApiService {
     required String priority,
     String? targetRole,
     int? gateId,
-    List<int>? recipients,
+    List<String>? recipients,
   }) async {
     final token = await getToken();
 
@@ -458,19 +458,23 @@ class ApiService {
       "priority": priority,
     };
 
-    // All Drivers
-    if (targetRole != null) {
-      body["target_role"] = targetRole;
+    //  All Drivers Path
+    if (targetRole != null &&
+        gateId == null &&
+        (recipients == null || recipients.isEmpty)) {
+      body["target_type"] = "all";
     }
 
-    // Specific Gate
+    // Specific Gate Filter Path
     if (gateId != null) {
-      body["gate"] = gateId;
+      body["target_type"] = "gate$gateId";
     }
 
-    // Custom Selection
+    // Custom Selection Path
     if (recipients != null && recipients.isNotEmpty) {
-      body["recipients"] = recipients;
+      body["target_type"] = "custom";
+      body["recipients"] =
+          recipients; // Passes target model sets array lists matching your M2M structural lookups
     }
 
     final response = await http.post(
@@ -482,7 +486,7 @@ class ApiService {
       body: jsonEncode(body),
     );
 
-    if (response.statusCode != 201) {
+    if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception("Failed to send alert: ${response.body}");
     }
   }
