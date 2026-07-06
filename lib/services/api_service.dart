@@ -318,6 +318,19 @@ class ApiService {
     throw Exception('Failed to load gates: ${response.body}');
   }
 
+  static Future<List<dynamic>> getDrivers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/drivers/'),
+      headers: await authHeaders(),
+    );
+
+    _handleResponse(response);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load Drivers: ${response.body}');
+  }
+
   static Future<void> uploadFCMToken(String token) async {
     try {
       final headers = await authHeaders();
@@ -349,19 +362,27 @@ class ApiService {
 
     try {
       final headers = await authHeaders();
-
       print("Headers: $headers");
 
       final response = await http.get(uri, headers: headers);
 
       print("Status Code: ${response.statusCode}");
-      print("Body:");
-      print(response.body);
-
       _handleResponse(response);
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final decodedData = jsonDecode(response.body);
+
+        if (decodedData is Map && decodedData.containsKey('results')) {
+          print(
+            "Received paginated results list payload segment. Items: ${decodedData['results'].length}",
+          );
+          return decodedData['results'] as List<dynamic>;
+        } else if (decodedData is List) {
+          print(
+            "Received raw unpaginated array loop package. Items: ${decodedData.length}",
+          );
+          return decodedData;
+        }
       }
 
       throw Exception(response.body);

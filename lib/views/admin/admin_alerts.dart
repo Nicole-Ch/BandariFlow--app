@@ -66,38 +66,72 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
-  Future<void> loadAlerts() async {
-    try {
-      final alerts = await ApiService.getBroadcastAlerts();
+  bool _isLoadingAlerts = false;
+  bool _isLoadingGates = false;
+  bool _isLoadingDrivers = false;
 
+  Future<void> loadAlerts() async {
+    if (_isLoadingAlerts) return;
+    try {
+      setState(() => _isLoadingAlerts = true);
+      final alerts = await ApiService.getBroadcastAlerts();
+      if (!mounted) return;
       setState(() {
         sentAlerts = alerts;
       });
     } catch (e) {
       debugPrint("Load Alerts Error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingAlerts = false);
     }
   }
 
   Future<void> loadGates() async {
+    if (_isLoadingGates) return;
     try {
+      setState(() => _isLoadingGates = true);
       final data = await ApiService.getGates();
-
+      if (!mounted) return;
       setState(() {
         gates = data;
       });
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint("Load Gates Error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingGates = false);
+    }
+  }
+
+  Future<void> loadDrivers() async {
+    if (_isLoadingDrivers) return;
+    try {
+      setState(() => _isLoadingDrivers = true);
+      final data = await ApiService.getDrivers();
+      if (!mounted) return;
+      setState(() {
+        driver = data;
+      });
+    } catch (e) {
+      debugPrint("Load Drivers Error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingDrivers = false);
     }
   }
 
   List<dynamic> sentAlerts = [];
   List<dynamic> gates = [];
+  List<dynamic> driver = [];
 
   @override
   void initState() {
     super.initState();
-    loadAlerts();
-    loadGates();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await loadAlerts();
+      await Future.delayed(const Duration(milliseconds: 300));
+      await loadGates();
+      await Future.delayed(const Duration(milliseconds: 300));
+      await loadDrivers();
+    });
   }
 
   Widget build(BuildContext context) {

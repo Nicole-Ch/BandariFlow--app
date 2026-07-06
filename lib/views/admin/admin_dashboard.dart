@@ -24,9 +24,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       final data = await ApiService.getYardCapacities();
 
       print("Received ${data.length} yard capacity records");
-
       if (!mounted) return;
-
       setState(() {
         yardCapacities = data;
         loadingHeatmap = false;
@@ -35,7 +33,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       print("Yard capacity error: $e");
 
       if (!mounted) return;
-
       setState(() {
         loadingHeatmap = false;
       });
