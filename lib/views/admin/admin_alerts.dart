@@ -19,13 +19,6 @@ List<String> selectedDrivers = [];
 
 class _AlertsPageState extends State<AlertsPage> {
   @override
-  final List<Map<String, dynamic>> gates = [
-    {"id": 1, "name": "Berth 8 Gate"},
-    {"id": 2, "name": "Gate 6"},
-    {"id": 3, "name": "Gate 7"},
-    {"id": 4, "name": "Shimanzi Gate"},
-  ];
-
   final List<Map<String, dynamic>> drivers = [
     {"id": 1, "fullname": "John Mwangi"},
     {"id": 2, "fullname": "Brian Otieno"},
@@ -85,12 +78,26 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  Future<void> loadGates() async {
+    try {
+      final data = await ApiService.getGates();
+
+      setState(() {
+        gates = data;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
   List<dynamic> sentAlerts = [];
+  List<dynamic> gates = [];
 
   @override
   void initState() {
     super.initState();
     loadAlerts();
+    loadGates();
   }
 
   Widget build(BuildContext context) {
