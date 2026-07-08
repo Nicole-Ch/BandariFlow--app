@@ -68,16 +68,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     Icon(Icons.anchor, color: Colors.white, size: 30),
 
-                    Text(
-                      'Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        'Profile',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-
-                    Icon(Icons.notifications, color: Colors.white, size: 30),
                   ],
                 ),
               ),
