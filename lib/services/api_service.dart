@@ -524,7 +524,7 @@ class ApiService {
       "message": message,
       "priority": priority,
       "target_role": targetRole,
-      if (gateId != null) "gate": gateId,
+      "gate": ?gateId,
     };
 
     final response = await http.post(

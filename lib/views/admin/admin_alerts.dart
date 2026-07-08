@@ -128,6 +128,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

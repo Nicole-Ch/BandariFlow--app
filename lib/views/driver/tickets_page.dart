@@ -218,6 +218,7 @@ Widget _ticketCardFromApi(BuildContext context, Map<String, dynamic> booking) {
   final startTime = _formatTime(slot['start_time']);
   final endTime = _formatTime(slot['end_time']);
   final timeWindow = '$startTime - $endTime';
+  final bookingDate = _formatDate(slot['start_time']);
 
   Color statusColor;
   String statusText;
@@ -245,6 +246,7 @@ Widget _ticketCardFromApi(BuildContext context, Map<String, dynamic> booking) {
     gate: gate,
     containerNo: containerNo,
     timeWindow: timeWindow,
+    bookingDate: bookingDate,
     bookingRef: bookingRef,
     statusText: statusText,
     statusColor: statusColor,
@@ -289,6 +291,7 @@ Widget _ticketCard({
   required Color statusColor,
   required String buttonText,
   required Color buttonColor,
+  required String bookingDate,
 }) {
   return Container(
     width: double.infinity,
@@ -349,6 +352,14 @@ Widget _ticketCard({
                       color: Color(0xFF0A2342),
                     ),
                   ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    'Date: $bookingDate',
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
