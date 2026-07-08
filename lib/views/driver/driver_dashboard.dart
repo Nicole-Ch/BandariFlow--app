@@ -246,7 +246,7 @@ class _DriverDashboardState extends State<DriverDashboard>
 
   Future<void> loadHeatmapData({int? gateId}) async {
     try {
-      final data = await ApiService.getYardCapacities(gateId: gateId);
+      final data = await ApiService.getYardCapacities();
 
       if (data.isEmpty && gateId != null) {
         final fallbackData = await ApiService.getYardCapacities();
@@ -321,96 +321,122 @@ class _DriverDashboardState extends State<DriverDashboard>
 
     if (yardCapacities.isEmpty) {
       return const Center(
-        child: Text(
-          'System Offline: No Yard Data',
-          style: TextStyle(color: Colors.white54),
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            'System Offline: No Yard Data Available',
+            style: TextStyle(
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       );
     }
 
-    List<dynamic> sortedYards = List.from(yardCapacities);
-    sortedYards.sort((a, b) {
-      final aTotal = (a['quota_total'] ?? 0) as num;
-      final aReserved = (a['quota_reserved'] ?? 0) as num;
-      final aRatio = aTotal == 0 ? 0.0 : aReserved / aTotal;
+    // 1. GROUP AND AVERAGE DATA BY UNIQUE GATE NAME
+    // This merges your duplicate shipping line entries into single gate values!
+    final Map<String, List<double>> gateRatios = {};
 
-      final bTotal = (b['quota_total'] ?? 0) as num;
-      final bReserved = (b['quota_reserved'] ?? 0) as num;
-      final bRatio = bTotal == 0 ? 0.0 : bReserved / bTotal;
+    for (var yard in yardCapacities) {
+      final String gateName =
+          yard['gate']?['name']?.toString() ?? 'Terminal Gate';
+      final total = (yard['quota_total'] ?? 1) as num;
+      final reserved = (yard['quota_reserved'] ?? 0) as num;
+      final ratio = total == 0 ? 0.0 : reserved / total;
 
-      return aRatio.compareTo(bRatio); // Sorts from Low (Green) -> High (Red)
+      if (!gateRatios.containsKey(gateName)) {
+        gateRatios[gateName] = [];
+      }
+      gateRatios[gateName]!.add(ratio.toDouble());
+    }
+
+    // Convert the grouped map back into a clean list for the UI
+    final List<Map<String, dynamic>> uniqueGatesList = [];
+    gateRatios.forEach((gateName, ratiosList) {
+      // Calculate the mathematical average ratio for this specific gate
+      final double avgRatio =
+          ratiosList.reduce((a, b) => a + b) / ratiosList.length;
+      uniqueGatesList.add({
+        'name': gateName,
+        'ratio': avgRatio,
+        'percentage': (avgRatio * 100).round(),
+      });
     });
 
-    // Limit to 10 visual blocks to prevent UI overflow
-    final maxVisible = sortedYards.length > 10 ? 10 : sortedYards.length;
+    uniqueGatesList.sort(
+      (a, b) => (a['ratio'] as double).compareTo(b['ratio'] as double),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text(
-              'Clear (Low)',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            const Text(
-              'Full (High)',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(maxVisible, (index) {
-            final yard = sortedYards[index];
+        const Divider(height: 1),
+        const SizedBox(height: 12),
 
-            final total = (yard['quota_total'] ?? 12) as num;
-            final reserved = (yard['quota_reserved'] ?? 0) as num;
-            final ratio = total == 0 ? 0.0 : reserved / total;
+        // 3. THE CLEAN, COMPACT VERTICAL ROW GENERATOR
+        Column(
+          children: List.generate(uniqueGatesList.length, (index) {
+            final gate = uniqueGatesList[index];
+            final String name = gate['name'];
+            final int percent = gate['percentage'];
+            final double ratio = gate['ratio'];
 
-            // Traffic Color Logic
-            Color color;
+            // Clean traffic light indicator color logic based on utilization bounds
+            Color lightColor;
             if (ratio <= 0.33) {
-              color = const Color(0xFF43A047);
+              lightColor = const Color(0xFF43A047); // Green
             } else if (ratio <= 0.66) {
-              color = const Color(0xFFFFB300);
+              lightColor = const Color(0xFFFFB300); // Yellow
             } else {
-              color = const Color(0xFFE53935);
+              lightColor = const Color(0xFFE53935); // Red
             }
 
-            final gateName = yard['gate']?['name']?.toString() ?? 'Gate';
-            final percentUsed = (ratio * 100).toStringAsFixed(0);
-
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Tooltip(
-                  message: '$gateName\n$percentUsed% Full ($reserved/$total)',
-                  child: Container(
-                    height: 24,
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 14,
+                    height: 14,
                     decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(6),
+                      shape: BoxShape.circle,
+                      color: lightColor,
                       boxShadow: [
                         BoxShadow(
-                          color: color.withValues(alpha: 0.3),
-                          blurRadius: 4,
+                          color: lightColor.withAlpha(80),
+                          blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+
+                  // GATE NAME LABEL
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+
+                  // PERCENTAGE FULL CAPACITY VALUE
+                  Text(
+                    "$percent% full",
+                    style: const TextStyle(
+                      // Added const here for better build performance!
+                      fontSize: 16,
+                      fontWeight: FontWeight
+                          .bold, // Swapped from ultra-heavy w900 to bold for a cleaner look
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
               ),
             );
           }),
