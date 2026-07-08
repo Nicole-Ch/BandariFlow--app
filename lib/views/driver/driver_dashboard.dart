@@ -334,8 +334,6 @@ class _DriverDashboardState extends State<DriverDashboard>
       );
     }
 
-    // 1. GROUP AND AVERAGE DATA BY UNIQUE GATE NAME
-    // This merges your duplicate shipping line entries into single gate values!
     final Map<String, List<double>> gateRatios = {};
 
     for (var yard in yardCapacities) {
@@ -374,7 +372,6 @@ class _DriverDashboardState extends State<DriverDashboard>
         const Divider(height: 1),
         const SizedBox(height: 12),
 
-        // 3. THE CLEAN, COMPACT VERTICAL ROW GENERATOR
         Column(
           children: List.generate(uniqueGatesList.length, (index) {
             final gate = uniqueGatesList[index];

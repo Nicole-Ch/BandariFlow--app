@@ -3,6 +3,7 @@ import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:bandariflow/views/driver/tickets_page.dart';
 
@@ -181,16 +182,16 @@ class _BookingCreateState extends State<BookingCreate> {
 
   String formatDate(dynamic value) {
     if (value == null) return '--';
-    final text = value.toString();
-    if (text.length < 10) return text;
-    return text.substring(0, 10);
+
+    final date = DateTime.parse(value.toString()).toLocal();
+    return DateFormat('dd MMM yyyy').format(date);
   }
 
   String formatTime(dynamic value) {
     if (value == null) return '--';
-    final text = value.toString();
-    if (text.length < 16) return text.substring(11, 16);
-    return text;
+
+    final date = DateTime.parse(value.toString()).toLocal();
+    return DateFormat('hh:mm a').format(date);
   }
 
   void _showAddTruckDialog() {
@@ -631,7 +632,6 @@ class _BookingCreateState extends State<BookingCreate> {
                                 decoration: _inputDecoration(),
                                 isExpanded: true,
                                 items: slots.map((slot) {
-                                  final gate = slot['gate']?['name'] ?? 'Gate';
                                   final date = formatDate(slot['start_time']);
                                   final start = formatTime(slot['start_time']);
                                   final end = formatTime(slot['end_time']);
@@ -639,7 +639,7 @@ class _BookingCreateState extends State<BookingCreate> {
                                   return DropdownMenuItem<int>(
                                     value: slot['id'],
                                     child: Text(
-                                      '$gate | $date | $start - $end',
+                                      '$date • $start - $end',
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
