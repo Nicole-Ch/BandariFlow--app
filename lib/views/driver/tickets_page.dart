@@ -1,6 +1,9 @@
 import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/driver/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:bandariflow/views/driver/booking_details_page.dart';
 import 'package:bandariflow/views/driver/gate_pass_screen.dart';
 
@@ -14,6 +17,7 @@ class MyTicketsPage extends StatefulWidget {
 class _MyTicketsPageState extends State<MyTicketsPage> {
   int selectedTab = 0;
   bool loading = true;
+  bool offlineMode = false;
   String? error;
   List<dynamic> bookings = [];
 
@@ -24,17 +28,52 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
   }
 
   Future<void> loadBookings() async {
+    final prefs = await SharedPreferences.getInstance();
+
     try {
+      final connectivity = await Connectivity().checkConnectivity();
+
+      final isOffline = connectivity.contains(ConnectivityResult.none);
+
+      if (isOffline) {
+        final cached = prefs.getString('cached_bookings');
+
+        if (cached != null) {
+          bookings = jsonDecode(cached);
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          offlineMode = true;
+          loading = false;
+        });
+
+        return;
+      }
+
       final data = await ApiService.getBookings();
+
+      await prefs.setString('cached_bookings', jsonEncode(data));
+
       if (!mounted) return;
+
       setState(() {
         bookings = data;
         loading = false;
+        offlineMode = false;
       });
     } catch (e) {
+      final cached = prefs.getString('cached_bookings');
+
+      if (cached != null) {
+        bookings = jsonDecode(cached);
+      }
+
       if (!mounted) return;
+
       setState(() {
-        error = e.toString();
+        offlineMode = true;
         loading = false;
       });
     }
@@ -80,14 +119,36 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: loadBookings,
-                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    onPressed: offlineMode ? null : loadBookings,
+                    icon: Icon(
+                      Icons.refresh,
+                      color: offlineMode ? Colors.white54 : Colors.white,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
+            if (offlineMode)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                color: Colors.orange.shade100,
+                child: const Row(
+                  children: [
+                    Icon(Icons.wifi_off, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "You're offline. You can still view your saved passes.",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 12),
 
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -168,7 +229,11 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                   : error != null
                   ? Center(child: Text(error!))
                   : RefreshIndicator(
-                      onRefresh: loadBookings,
+                      onRefresh: () async {
+                        if (!offlineMode) {
+                          await loadBookings();
+                        }
+                      },
                       child: currentList.isEmpty
                           ? ListView(
                               children: const [

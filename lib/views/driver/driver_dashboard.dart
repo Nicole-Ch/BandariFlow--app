@@ -21,6 +21,7 @@ class _DriverDashboardState extends State<DriverDashboard>
   List<dynamic> bookings = [];
   Map<String, dynamic>? activeBooking;
   bool loading = true;
+  Map<String, dynamic>? driverProfile;
 
   Timer? _countdownTimer;
   String _hoursStr = '00';
@@ -30,21 +31,126 @@ class _DriverDashboardState extends State<DriverDashboard>
   bool _loadingLocation = true;
   List<dynamic> yardCapacities = [];
   bool loadingHeatmap = true;
+  bool _isInitialLoaded = false;
+  bool _isFetching = false;
 
   @override
   void dispose() {
-    _countdownTimer?.cancel(); //  stops running in background when page closes
+    _countdownTimer
+        ?.cancel(); // Stops timer running in background when page closes
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    loadDashboardData();
+
+    debugPrint("INIT STATE -> ${identityHashCode(this)}");
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCurrentLocation();
+      if (mounted && !_isInitialLoaded) {
+        _runUnifiedFetchPipeline();
+      }
     });
+  }
+
+  Future<void> _runUnifiedFetchPipeline() async {
+    debugPrint(
+      "PIPELINE ${identityHashCode(this)} "
+      "fetch=$_isFetching loaded=$_isInitialLoaded",
+    );
+    if (_isFetching || _isInitialLoaded) return;
+
+    setState(() {
+      _isFetching = true;
+    });
+
+    try {
+      debugPrint(
+        "=== STARTING UNIFIED DATA RECONCILIATION FOR BANDARIFLOW ===",
+      );
+
+      // Run profile and booking requests concurrently on the background pool
+      final results = await Future.wait([
+        ApiService.getDriverProfile(),
+        ApiService.getBookings(),
+      ]);
+
+      final profileData = results[0] as Map<String, dynamic>?;
+      final bookingsData = results[1] as List<dynamic>;
+
+      Map<String, dynamic>? approvedBooking;
+      Map<String, dynamic>? latestBooking;
+
+      if (bookingsData.isNotEmpty) {
+        latestBooking = Map<String, dynamic>.from(bookingsData.first);
+      }
+
+      // Isolate active approved container reservations
+      for (final booking in bookingsData) {
+        final status = booking['status']?.toString().toLowerCase() ?? '';
+        if (status == 'approved') {
+          approvedBooking = Map<String, dynamic>.from(booking);
+          break;
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        driverProfile = profileData;
+        bookings = bookingsData;
+        activeBooking = approvedBooking;
+        loading = false;
+        _isInitialLoaded = true;
+      });
+
+      // Initialize slot expiration clocks
+      if (approvedBooking != null) {
+        _startCountdown(approvedBooking['slot_detail']?['start_time']);
+      }
+
+      // Reconcile targeted gate capacity parameters
+      final gateId =
+          (approvedBooking ?? latestBooking)?['slot_detail']?['gate']?['id'];
+
+      if (gateId != null) {
+        await loadHeatmapData(gateId: gateId);
+      } else {
+        if (mounted) {
+          setState(() {
+            yardCapacities = [];
+            loadingHeatmap = false;
+          });
+        }
+      }
+
+      // Check for broadcast informational notes safely
+      await checkForBroadcastAlerts();
+
+      // Check physical geofenced coordinates
+      await _loadCurrentLocation();
+
+      debugPrint(
+        "=== UNIFIED DATA ENGINE COMPLETED PROCESSING SLOTS BACKEND ===",
+      );
+    } catch (e) {
+      debugPrint("Pipeline Fatal Execution Error: $e");
+      if (mounted) {
+        setState(() {
+          bookings = [];
+          activeBooking = null;
+          yardCapacities = [];
+          loading = false;
+          loadingHeatmap = false;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetching = false; // Release network concurrency guard lock cleanly
+        });
+      }
+    }
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -72,37 +178,18 @@ class _DriverDashboardState extends State<DriverDashboard>
         return;
       }
 
-      // request position data with a hard structural timeout safety net
-      final position =
-          await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.high,
-              distanceFilter: 10,
-            ),
-          ).timeout(
-            const Duration(
-              seconds: 5,
-            ), // If GPS fails to respond in 5s, drop out
-            onTimeout: () async {
-              // Fallback: Grab the last known location stored by the handset cache instead
-              final lastKnown = await Geolocator.getLastKnownPosition();
-              if (lastKnown != null) return lastKnown;
-
-              // Provide fallback mock coordinates for Nairobi if everything fails
-              return Position(
-                latitude: -1.2921, // Nairobi Latitude
-                longitude: 36.8219, // Nairobi Longitude
-                timestamp: DateTime.now(),
-                accuracy: 1.0,
-                altitude: 1795.0,
-                altitudeAccuracy: 1.0,
-                heading: 0.0,
-                headingAccuracy: 1.0,
-                speed: 0.0,
-                speedAccuracy: 1.0,
-              );
-            },
-          );
+      final position = Position(
+        latitude: -1.2921,
+        longitude: 36.8219,
+        timestamp: DateTime.now(),
+        accuracy: 1.0,
+        altitude: 1795.0,
+        altitudeAccuracy: 1.0,
+        heading: 0.0,
+        headingAccuracy: 1.0,
+        speed: 0.0,
+        speedAccuracy: 1.0,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -112,66 +199,6 @@ class _DriverDashboardState extends State<DriverDashboard>
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingLocation = false);
-    }
-  }
-
-  Future<void> loadDashboardData() async {
-    try {
-      print("=== DEBUG 1: Fetching Bookings ===");
-      final data = await ApiService.getBookings();
-      print("=== DEBUG 2: Bookings received, total: ${data.length} ===");
-
-      Map<String, dynamic>? approvedBooking;
-      Map<String, dynamic>? latestBooking;
-
-      if (data.isNotEmpty) {
-        latestBooking = Map<String, dynamic>.from(data.first);
-      }
-
-      for (final b in data) {
-        final status = (b['status'] ?? '').toString().toLowerCase();
-        if (status == 'approved') {
-          approvedBooking = Map<String, dynamic>.from(b);
-          break;
-        }
-      }
-
-      final bookingForHeatmap = approvedBooking ?? latestBooking;
-
-      if (!mounted) return;
-      setState(() {
-        bookings = data;
-        activeBooking = approvedBooking;
-        loading = false;
-      });
-
-      if (approvedBooking != null) {
-        print("=== DEBUG 3: Starting Countdown ===");
-        _startCountdown(approvedBooking['slot_detail']?['start_time']);
-      }
-
-      final gateId = bookingForHeatmap?['slot_detail']?['gate']?['id'];
-      if (gateId != null) {
-        print("=== DEBUG 4: Loading Heatmap for Gate $gateId ===");
-        await loadHeatmapData(gateId: gateId);
-      } else {
-        if (!mounted) return;
-        setState(() {
-          loadingHeatmap = false;
-        });
-      }
-
-      print("=== DEBUG 5: Checking Broadcasts ===");
-      await checkForBroadcastAlerts();
-      print("=== DEBUG 6: Dashboard fully loaded successfully! ===");
-    } catch (e) {
-      print("=== DEBUG ERROR caught in dashboard: $e ===");
-      if (!mounted) return;
-      setState(() {
-        loading = false;
-        activeBooking = null;
-        loadingHeatmap = false;
-      });
     }
   }
 
@@ -248,70 +275,22 @@ class _DriverDashboardState extends State<DriverDashboard>
     try {
       final data = await ApiService.getYardCapacities();
 
-      if (data.isEmpty && gateId != null) {
-        final fallbackData = await ApiService.getYardCapacities();
-        if (!mounted) return;
-        setState(() {
-          yardCapacities = fallbackData;
-          loadingHeatmap = false;
-        });
-        return;
-      }
-
       if (!mounted) return;
+
       setState(() {
         yardCapacities = data;
         loadingHeatmap = false;
       });
     } catch (e) {
+      debugPrint("Heatmap Error: $e");
+
       if (!mounted) return;
+
       setState(() {
+        yardCapacities = [];
         loadingHeatmap = false;
       });
     }
-  }
-
-  void _startCountdown(dynamic startTimeStr) {
-    _countdownTimer?.cancel();
-    if (startTimeStr == null) return;
-
-    DateTime? targetTime;
-    try {
-      targetTime = DateTime.parse(startTimeStr.toString()).toLocal();
-    } catch (_) {
-      return;
-    }
-
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final now = DateTime.now();
-      final difference = targetTime!.difference(now);
-
-      if (difference.isNegative) {
-        timer.cancel();
-        _countdownTimer?.cancel();
-
-        if (mounted) {
-          setState(() {
-            _hoursStr = '00';
-            _minutesStr = '00';
-            _secondsStr = '00';
-          });
-        }
-        return;
-      }
-
-      if (mounted) {
-        setState(() {
-          _hoursStr = difference.inHours.toString().padLeft(2, '0');
-          _minutesStr = (difference.inMinutes.remainder(
-            60,
-          )).toString().padLeft(2, '0');
-          _secondsStr = (difference.inSeconds.remainder(
-            60,
-          )).toString().padLeft(2, '0');
-        });
-      }
-    });
   }
 
   Widget _buildHeatmap() {
@@ -442,6 +421,47 @@ class _DriverDashboardState extends State<DriverDashboard>
     );
   }
 
+  void _startCountdown(dynamic startTimeStr) {
+    _countdownTimer?.cancel();
+    if (startTimeStr == null) return;
+
+    DateTime? targetTime;
+    try {
+      targetTime = DateTime.parse(startTimeStr.toString()).toLocal();
+    } catch (_) {
+      return;
+    }
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final now = DateTime.now();
+      final difference = targetTime!.difference(now);
+
+      if (difference.isNegative) {
+        timer.cancel();
+        if (mounted) {
+          setState(() {
+            _hoursStr = '00';
+            _minutesStr = '00';
+            _secondsStr = '00';
+          });
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _hoursStr = difference.inHours.toString().padLeft(2, '0');
+          _minutesStr = (difference.inMinutes.remainder(
+            60,
+          )).toString().padLeft(2, '0');
+          _secondsStr = (difference.inSeconds.remainder(
+            60,
+          )).toString().padLeft(2, '0');
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -490,14 +510,37 @@ class _DriverDashboardState extends State<DriverDashboard>
                     ),
                   ),
                   Spacer(),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: Icon(Icons.person, color: Color(0xFF0A2342)),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white,
+                    backgroundImage: driverProfile?['photo'] != null
+                        ? NetworkImage(
+                            driverProfile!['photo'].toString().startsWith(
+                                  'http',
+                                )
+                                ? driverProfile!['photo']
+                                : 'http://10.0.2.2:8000${driverProfile!['photo']}',
+                          )
+                        : null,
+                    child: driverProfile?['photo'] == null
+                        ? Text(
+                            (driverProfile?['fullname'] != null &&
+                                    driverProfile!['fullname']
+                                        .toString()
+                                        .trim()
+                                        .isNotEmpty)
+                                ? driverProfile!['fullname']
+                                      .toString()
+                                      .trim()
+                                      .substring(0, 1)
+                                      .toUpperCase()
+                                : 'D',
+                            style: const TextStyle(
+                              color: Color(0xFF0A2342),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
                   ),
                 ],
               ),
@@ -1186,38 +1229,6 @@ class _DriverDashboardState extends State<DriverDashboard>
           fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
-      ),
-    );
-  }
-}
-
-// ignore: unused_element
-Widget _statusDot(String label, Color color) {
-  return Padding(
-    padding: EdgeInsets.only(right: 12),
-    child: Row(
-      children: [
-        CircleAvatar(radius: 5, backgroundColor: color),
-        SizedBox(width: 6),
-        Text(label),
-      ],
-    ),
-  );
-}
-
-class _HeatBox extends StatelessWidget {
-  final Color color;
-
-  const _HeatBox({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(5),
       ),
     );
   }

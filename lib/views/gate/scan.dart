@@ -61,7 +61,25 @@ class _QrScannerPageState extends State<QrScannerPage> {
     });
 
     try {
+      print("========== STEP 1 ==========");
+      print("Submit button pressed");
+      print("QR Token:");
+      print(token);
+
       final position = await _getCurrentPosition();
+
+      print("========== STEP 2 ==========");
+      print("GPS finished");
+
+      if (position != null) {
+        print("Latitude: ${position.latitude}");
+        print("Longitude: ${position.longitude}");
+      } else {
+        print("GPS returned NULL");
+      }
+
+      print("========== STEP 3 ==========");
+      print("Calling ApiService.scanGatePass()");
 
       final response = await ApiService.scanGatePass(
         qrToken: token,
@@ -69,6 +87,10 @@ class _QrScannerPageState extends State<QrScannerPage> {
         scannerLon: position?.longitude,
         deviceInfo: 'Android Scanner',
       );
+
+      print("========== STEP 4 ==========");
+      print("API call completed successfully");
+      print(response);
 
       if (!mounted) return;
 
@@ -80,7 +102,11 @@ class _QrScannerPageState extends State<QrScannerPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_statusText), backgroundColor: Colors.green),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("========== ERROR ==========");
+      print(e);
+      print(stackTrace);
+
       if (!mounted) return;
 
       setState(() {
@@ -92,6 +118,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
+      print("========== FINISHED ==========");
+
       if (mounted) {
         setState(() => _isProcessing = false);
       }

@@ -420,8 +420,12 @@ class ApiService {
     double? scannerLon,
     String deviceInfo = '',
   }) async {
+    print("API STEP A");
+    print("Posting to:");
+    print('$baseUrl/security/scans/');
+
     final response = await http.post(
-      Uri.parse('$baseUrl/gate-scan/'),
+      Uri.parse('$baseUrl/security/scans/'),
       headers: await authHeaders(),
       body: jsonEncode({
         'qr_token': qrToken,
@@ -431,7 +435,12 @@ class ApiService {
       }),
     );
 
-    _handleResponse(response); // Global intercept
+    print("API STEP B");
+    print("Status Code: ${response.statusCode}");
+    print("Body:");
+    print(response.body);
+
+    _handleResponse(response);
 
     final data = jsonDecode(response.body);
 
