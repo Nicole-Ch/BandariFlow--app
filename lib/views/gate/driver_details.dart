@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DriverLogs extends StatefulWidget {
-  const DriverLogs({super.key});
+  const DriverLogs({super.key, required this.scanData});
+  final Map<String, dynamic> scanData;
 
   @override
   State<DriverLogs> createState() => DriverLogsState();
@@ -10,6 +12,31 @@ class DriverLogs extends StatefulWidget {
 class DriverLogsState extends State<DriverLogs> {
   @override
   Widget build(BuildContext context) {
+    print("SCAN DATA:");
+    print(widget.scanData);
+
+    final booking = (widget.scanData['booking'] as Map<String, dynamic>?) ?? {};
+    final driver = (booking['driver'] as Map<String, dynamic>?) ?? {};
+
+    final slot = (booking['slot_detail'] as Map<String, dynamic>?) ?? {};
+
+    final gate = (slot['gate'] as Map<String, dynamic>?) ?? {};
+    final documents = booking['documents'] as List? ?? [];
+
+    final driverName = driver['fullname'] ?? 'Unknown Driver';
+    final idNumber = driver['id_number'] ?? '--';
+    final phone = driver['phone'] ?? '--';
+    final photo = driver['photo'];
+
+    final truckPlate = driver['preferred_truck'] ?? '--';
+    final shippingLine = booking['shippingline_detail']?['name'] ?? '--';
+    final bookingDate =
+        booking['created_at']?.toString().substring(0, 10) ?? '--';
+    final slotTime = slot['start_time']?.toString().substring(11, 16) ?? '--';
+    final gateName = gate['name'] ?? '--';
+
+    final documentUrl = documents.isNotEmpty ? documents.first['file'] : null;
+
     return Scaffold(
       backgroundColor: Color(0xffF5F7FB),
       appBar: AppBar(
@@ -84,12 +111,29 @@ class DriverLogsState extends State<DriverLogs> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRect(
-                      child: Container(
-                        width: 90,
-                        height: 100,
-                        child: Icon(Icons.person),
-                      ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: photo != null
+                          ? Image.network(
+                              photo.toString().startsWith('http')
+                                  ? photo
+                                  : 'http://10.0.2.2:8000$photo',
+                              width: 90,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 90,
+                                height: 100,
+                                color: Colors.grey.shade300,
+                                child: const Icon(Icons.person, size: 50),
+                              ),
+                            )
+                          : Container(
+                              width: 90,
+                              height: 100,
+                              color: Colors.grey.shade300,
+                              child: const Icon(Icons.person, size: 50),
+                            ),
                     ),
 
                     SizedBox(width: 18),
@@ -97,8 +141,8 @@ class DriverLogsState extends State<DriverLogs> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Pendo Jacky",
+                          Text(
+                            driverName,
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -108,14 +152,14 @@ class DriverLogsState extends State<DriverLogs> {
                           const SizedBox(height: 8),
 
                           Text(
-                            "Driver ID : 38902862",
+                            "Driver ID :$idNumber",
                             style: TextStyle(color: Colors.grey.shade700),
                           ),
 
                           const SizedBox(height: 6),
 
                           Text(
-                            "Phone : 0775261902",
+                            "Phone : $phone",
                             style: TextStyle(color: Colors.grey.shade700),
                           ),
 
@@ -161,27 +205,11 @@ class DriverLogsState extends State<DriverLogs> {
                 padding: EdgeInsets.all(18),
                 child: Column(
                   children: [
-                    buildRow(Icons.local_shipping, "Truck Plate", "KDA 184Z"),
-
-                    Divider(),
-
-                    buildRow(Icons.anchor, "Shipping Line", "MSC"),
-
-                    Divider(),
-
-                    buildRow(
-                      Icons.calendar_month,
-                      "Booking Date",
-                      "21 July 2026",
-                    ),
-
-                    Divider(),
-
-                    buildRow(Icons.access_time, "Slot", "09:00 AM"),
-
-                    Divider(),
-
-                    buildRow(Icons.location_pin, "Gate", "Gate 2"),
+                    buildRow(Icons.local_shipping, 'Truck Plate', truckPlate),
+                    buildRow(Icons.anchor, 'Shipping Line', shippingLine),
+                    buildRow(Icons.calendar_month, 'Booking Date', bookingDate),
+                    buildRow(Icons.access_time, 'Slot', slotTime),
+                    buildRow(Icons.location_pin, 'Gate', gateName),
                   ],
                 ),
               ),
@@ -190,29 +218,31 @@ class DriverLogsState extends State<DriverLogs> {
             const SizedBox(height: 20),
 
             // DOCUMENTS
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Verified Documents",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ),
+            documentUrl != null
+                ? SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: const Text('VIEW VERIFICATION DOCUMENT'),
+                      onPressed: () async {
+                        final uri = Uri.parse(
+                          documentUrl.toString().startsWith('http')
+                              ? documentUrl
+                              : 'http://10.0.2.2:8000$documentUrl',
+                        );
+
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
+                    ),
+                  )
+                : const Text('No document uploaded'),
 
             const SizedBox(height: 10),
 
-            Row(
-              children: [
-                Expanded(child: docCard("ID Copy")),
-
-                SizedBox(width: 10),
-
-                Expanded(child: docCard("Manifest")),
-
-                SizedBox(width: 10),
-
-                Expanded(child: docCard("Invoice")),
-              ],
-            ),
+            Row(children: [Expanded(child: docCard("ID Copy"))]),
             SizedBox(height: 30),
 
             //BUTTONS

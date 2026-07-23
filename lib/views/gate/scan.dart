@@ -2,6 +2,7 @@ import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/gate/driver_details.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:convert';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,26 +29,43 @@ class _QrScannerPageState extends State<QrScannerPage> {
   }
 
   Future<Position?> _getCurrentPosition() async {
+    print("Getting GPS...");
+
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return null;
+      print("GPS enabled: $serviceEnabled");
+
+      if (!serviceEnabled) {
+        print("GPS OFF");
+        return null;
+      }
 
       LocationPermission permission = await Geolocator.checkPermission();
+      print("Current permission: $permission");
+
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        print("Permission after request: $permission");
       }
 
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+        print("Permission denied");
         return null;
       }
 
-      return await Geolocator.getCurrentPosition(
+      print("Fetching location...");
+
+      final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
       );
-    } catch (_) {
+
+      print("Location received");
+      return position;
+    } catch (e) {
+      print("GPS ERROR: $e");
       return null;
     }
   }
@@ -63,40 +81,48 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
     try {
       print("========== STEP 1 ==========");
-      print("Submit button pressed");
-      print("QR Token:");
-      print(token);
+      print("QR Token: $token");
 
-      final position = await _getCurrentPosition();
+      Position? position = null;
 
       print("========== STEP 2 ==========");
-      print("GPS finished");
-
-      if (position != null) {
-        print("Latitude: ${position.latitude}");
-        print("Longitude: ${position.longitude}");
-      } else {
-        print("GPS returned NULL");
-      }
+      print("Latitude: ${position?.latitude}");
+      print("Longitude: ${position?.longitude}");
 
       print("========== STEP 3 ==========");
-      print("Calling ApiService.scanGatePass()");
+      print("Calling scanGatePass...");
 
       final response = await ApiService.scanGatePass(
         qrToken: token,
-        scannerLat: position?.latitude,
-        scannerLon: position?.longitude,
+        scannerLat: null,
+        scannerLon: null,
         deviceInfo: 'Android Scanner',
       );
 
-      print("========== STEP 4 ==========");
-      print("API call completed successfully");
+      print("========== API RESPONSE ==========");
       print(response);
+      print(response.runtimeType);
+
+      if (response == null) {
+        throw Exception("API returned null.");
+      }
+
+      if (response is! Map<String, dynamic>) {
+        throw Exception("Unexpected response type: ${response.runtimeType}");
+      }
 
       if (!mounted) return;
 
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              DriverLogs(scanData: Map<String, dynamic>.from(response)),
+        ),
+      );
+
       setState(() {
-        _statusText = response['detail']?.toString() ?? 'Scan successful';
+        _statusText = response['detail']?.toString() ?? "Scan successful";
         _statusColor = Colors.green;
       });
 
@@ -111,7 +137,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
       if (!mounted) return;
 
       setState(() {
-        _statusText = 'Scan failed';
+        _statusText = "Scan failed";
         _statusColor = Colors.red;
       });
 
@@ -119,10 +145,10 @@ class _QrScannerPageState extends State<QrScannerPage> {
         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
-      print("========== FINISHED ==========");
-
       if (mounted) {
-        setState(() => _isProcessing = false);
+        setState(() {
+          _isProcessing = false;
+        });
       }
     }
   }
@@ -296,12 +322,27 @@ class _QrScannerPageState extends State<QrScannerPage> {
                               onPressed: _isProcessing
                                   ? null
                                   : () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const DriverLogs(),
-                                        ),
-                                      );
+                                      final token = _manualTokenController.text
+                                          .replaceAll('\n', '')
+                                          .replaceAll('\r', '')
+                                          .trim();
+
+                                      print(token);
+
+                                      if (token.isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "Paste a QR token first",
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      _submitToken(token);
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0A2342),
