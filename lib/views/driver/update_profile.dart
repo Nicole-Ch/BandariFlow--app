@@ -76,6 +76,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         imageFile = File('${tempDir.path}/$name');
         await imageFile.writeAsBytes(profileImageBytes!);
       }
+      print("========== SAVE PROFILE ==========");
+      print("Image bytes null? ${profileImageBytes == null}");
+      print("Picked filename: $pickedFileName");
+      print("Image file path: ${imageFile?.path}");
+      print("Image exists: ${imageFile?.existsSync()}");
+      print("Image size: ${imageFile?.lengthSync()}");
 
       await ApiService.updateDriverProfile(
         fullName: fullNameController.text.trim(),
@@ -119,16 +125,27 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   }
 
   Future<void> pickProfileImage() async {
+    print("Opening picker...");
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
     );
 
-    if (result != null && result.files.single.bytes != null) {
+    print("Picker closed");
+
+    if (result != null) {
+      print("Image selected");
+
       setState(() {
         profileImageBytes = result.files.single.bytes;
         pickedFileName = result.files.single.name;
       });
+
+      print("Bytes length: ${profileImageBytes?.length}");
+      print("Filename: $pickedFileName");
+    } else {
+      print("User cancelled");
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:bandariflow/services/api_service.dart';
+import 'package:bandariflow/views/driver/update_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -61,11 +62,91 @@ class _LoginScreenState extends State<LoginScreen> {
           (route) => false,
         );
       } else {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/dashboard',
-          (route) => false,
-        );
+        // Get the driver's profile first
+        final profile = await ApiService.getDriverProfile();
+
+        final needsProfile =
+            profile['photo'] == null ||
+            (profile['id_number'] ?? '').toString().trim().isEmpty;
+
+        if (!mounted) return;
+
+        if (needsProfile) {
+          final completeNow = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              icon: const Icon(
+                Icons.account_circle,
+                size: 55,
+                color: Color(0xFF145FCC),
+              ),
+              title: const Text("Complete Your Profile"),
+              content: const Text(
+                "To help gate staff verify your identity quickly, please upload:\n\n"
+                "• A profile photo\n"
+                "• Your National ID number",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Later"),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Complete Now"),
+                ),
+              ],
+            ),
+          );
+
+          if (!mounted) return;
+
+          if (completeNow == true) {
+            final updated = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => UpdateProfilePage(profile: profile),
+              ),
+            );
+
+            if (!mounted) return;
+
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/dashboard',
+              (route) => false,
+            );
+
+            if (!mounted) return;
+
+            if (updated == true) {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/dashboard',
+                (route) => false,
+              );
+            } else {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/dashboard',
+                (route) => false,
+              );
+            }
+          } else {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/dashboard',
+              (route) => false,
+            );
+          }
+        } else {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/dashboard',
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -92,6 +173,12 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
