@@ -1,4 +1,5 @@
 import 'package:bandariflow/services/api_service.dart';
+import 'package:bandariflow/views/gate/driver_details.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -295,10 +296,12 @@ class _QrScannerPageState extends State<QrScannerPage> {
                               onPressed: _isProcessing
                                   ? null
                                   : () {
-                                      final token = _manualTokenController.text
-                                          .trim();
-                                      if (token.isEmpty) return;
-                                      _submitToken(token);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const DriverLogs(),
+                                        ),
+                                      );
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0A2342),
