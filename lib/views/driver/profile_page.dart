@@ -131,6 +131,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 profile?['user_email'] ?? '',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
+
               Text(
                 profile?['preferred_truck'] ?? 'No truck assigned',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -202,6 +203,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       icon: Icons.mail_outline,
                       title: 'Email',
                       value: profile?['user_email'] ?? '',
+                    ),
+
+                    SizedBox(height: 10),
+                    Divider(height: 1),
+                    SizedBox(height: 10),
+                    _profileItem(
+                      icon: Icons.badge,
+                      title: 'National ID',
+                      value: profile?['id_number'] ?? '',
                     ),
 
                     SizedBox(height: 10),

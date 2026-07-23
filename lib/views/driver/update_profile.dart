@@ -38,6 +38,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     phoneController = TextEditingController(
       text: widget.profile['phone'] ?? '',
     );
+    idNumberController = TextEditingController(
+      text: widget.profile['id_number'] ?? '',
+    );
     emailController = TextEditingController(
       text: widget.profile['user_email'] ?? '',
     );
@@ -45,9 +48,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       text: widget.profile['preferred_truck'] ?? '',
     );
     passwordController = TextEditingController(text: '');
-    idNumberController = TextEditingController(
-      text: widget.profile['id_number'] ?? '',
-    );
+
     licenseController = TextEditingController(
       text: widget.profile['license_number'] ?? '',
     );
@@ -295,6 +296,68 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                           SizedBox(height: 7),
                           TextField(
                             controller: fullNameController,
+                            style: TextStyle(color: Color(0xFF0A2342)),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFE1E7F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 15),
+
+              Container(
+                padding: EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Color(0xFFE1E7F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF1FB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.badge,
+                        color: Color(0xFF0A2342),
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'National ID Number',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 7),
+                          TextField(
+                            controller: idNumberController,
                             style: TextStyle(color: Color(0xFF0A2342)),
                             decoration: InputDecoration(
                               isDense: true,
