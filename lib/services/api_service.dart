@@ -560,6 +560,11 @@ class ApiService {
       headers: await authHeaders(),
     );
 
+    print("========== SCAN LOG RESPONSE ==========");
+    print(response.statusCode);
+    print(response.body);
+    print("=======================================");
+
     _handleResponse(response);
 
     if (response.statusCode == 200) {

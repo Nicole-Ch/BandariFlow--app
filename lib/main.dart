@@ -4,6 +4,7 @@ import 'package:bandariflow/views/auth/register_screen.dart';
 import 'package:bandariflow/views/driver/driver_dashboard.dart';
 import 'package:bandariflow/views/driver/profile_page.dart';
 import 'package:bandariflow/views/driver/tickets_page.dart';
+import 'package:bandariflow/views/gate/gate_staff_main.dart';
 import 'package:bandariflow/views/gate/scan.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -65,7 +66,8 @@ class BandariFlowApp extends StatelessWidget {
         '/gatepass': (context) => const MyTicketsPage(),
         '/profile': (context) => const ProfilePage(),
         '/adminDashboard': (context) => const AdminDashboard(),
-        '/scanner': (context) => const QrScannerPage(),
+
+        '/GateStaffMainScreen': (context) => const GateStaffMainScreen(),
       },
     );
   }

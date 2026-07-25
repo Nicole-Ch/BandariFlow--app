@@ -216,6 +216,11 @@ class DriverLogsState extends State<DriverLogs> {
             ),
 
             const SizedBox(height: 20),
+            Text(
+              "Driver's Document",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
 
             // DOCUMENTS
             documentUrl != null
@@ -250,7 +255,9 @@ class DriverLogsState extends State<DriverLogs> {
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
 
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pop(context);
+                },
 
                 icon: Icon(Icons.check),
 

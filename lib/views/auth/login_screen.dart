@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (role == 'gatestaff') {
         Navigator.pushNamedAndRemoveUntil(
           context,
-          '/scanner',
+          '/GateStaffMainScreen',
           (route) => false,
         );
       } else {

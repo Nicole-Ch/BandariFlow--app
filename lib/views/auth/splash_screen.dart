@@ -1,5 +1,6 @@
 import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/admin/admin_dashboard.dart';
+import 'package:bandariflow/views/gate/gate_staff_main.dart';
 import 'package:bandariflow/views/gate/scan.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -63,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
         print("=== SPLASH CHECK: Routing to Gate Staff Dashboard ===");
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const QrScannerPage()),
+          MaterialPageRoute(builder: (context) => const GateStaffMainScreen()),
         );
       } else {
         print("=== SPLASH CHECK: Routing to Driver Dashboard ===");

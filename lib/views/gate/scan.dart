@@ -105,13 +105,14 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
       if (!mounted) return;
 
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) =>
               DriverLogs(scanData: Map<String, dynamic>.from(response)),
         ),
       );
+      _manualTokenController.clear();
 
       setState(() {
         _statusText = response['detail']?.toString() ?? "Scan successful";
