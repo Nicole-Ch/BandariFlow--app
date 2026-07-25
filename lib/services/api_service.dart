@@ -102,6 +102,7 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
+
       await saveToken(data['access']);
       return data;
     } else {
@@ -295,7 +296,9 @@ class ApiService {
       Uri.parse('$baseUrl/bookings/'),
       headers: await authHeaders(),
     );
-
+    print("========== BOOKINGS RAW RESPONSE ==========");
+    print(response.body);
+    print("===========================================");
     _handleResponse(response); // Global intercept
 
     if (response.statusCode == 200) {
@@ -420,9 +423,11 @@ class ApiService {
     double? scannerLon,
     String deviceInfo = '',
   }) async {
-    print("API STEP A");
-    print("Posting to:");
-    print('$baseUrl/security/scans/');
+    print("========== API TOKEN ==========");
+    print(qrToken);
+    print("DOTS: ${'.'.allMatches(qrToken).length}");
+    print("LENGTH: ${qrToken.length}");
+    print("===============================");
 
     final response = await http.post(
       Uri.parse('$baseUrl/security/scans/'),
