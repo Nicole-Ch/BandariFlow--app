@@ -83,7 +83,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
       print("========== STEP 1 ==========");
       print("QR Token: $token");
 
-      Position? position = null;
+      Position? position;
 
       print("========== STEP 2 ==========");
       print("Latitude: ${position?.latitude}");
@@ -102,14 +102,6 @@ class _QrScannerPageState extends State<QrScannerPage> {
       print("========== API RESPONSE ==========");
       print(response);
       print(response.runtimeType);
-
-      if (response == null) {
-        throw Exception("API returned null.");
-      }
-
-      if (response is! Map<String, dynamic>) {
-        throw Exception("Unexpected response type: ${response.runtimeType}");
-      }
 
       if (!mounted) return;
 

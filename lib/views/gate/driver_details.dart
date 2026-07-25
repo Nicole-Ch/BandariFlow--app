@@ -121,7 +121,7 @@ class DriverLogsState extends State<DriverLogs> {
                               width: 90,
                               height: 100,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (_, _, _) => Container(
                                 width: 90,
                                 height: 100,
                                 color: Colors.grey.shade300,
@@ -241,9 +241,6 @@ class DriverLogsState extends State<DriverLogs> {
                 : const Text('No document uploaded'),
 
             const SizedBox(height: 10),
-
-            Row(children: [Expanded(child: docCard("ID Copy"))]),
-            SizedBox(height: 30),
 
             //BUTTONS
             SizedBox(
