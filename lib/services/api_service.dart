@@ -573,4 +573,17 @@ class ApiService {
 
     throw Exception('Failed to load gate scan logs: ${response.body}');
   }
+
+  static Future<void> cancelBooking(int bookingId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/bookings/$bookingId/cancel/'),
+      headers: await authHeaders(),
+    );
+
+    _handleResponse(response);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to cancel booking: ${response.body}');
+    }
+  }
 }

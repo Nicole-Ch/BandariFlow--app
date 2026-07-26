@@ -93,6 +93,49 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     }).toList();
   }
 
+  Future<void> _cancelBooking(int bookingId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel Booking'),
+        content: const Text('Are you sure you want to cancel this booking?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ApiService.cancelBooking(bookingId);
+
+      await loadBookings(); // refresh the list
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Booking cancelled'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to cancel: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentList = selectedTab == 0 ? activeBookings : pastBookings;
@@ -271,56 +314,58 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
       ),
     );
   }
-}
 
-Widget _ticketCardFromApi(BuildContext context, Map<String, dynamic> booking) {
-  final status = (booking['status'] ?? '').toString().toLowerCase();
-  final containerNo = booking['container_number']?.toString() ?? '—';
-  final bookingRef = 'BK-${booking['id']}';
+  Widget _ticketCardFromApi(
+    BuildContext context,
+    Map<String, dynamic> booking,
+  ) {
+    final status = (booking['status'] ?? '').toString().toLowerCase();
+    final containerNo = booking['container_number']?.toString() ?? '—';
+    final bookingRef = 'BK-${booking['id']}';
+    final slot = booking['slot_detail'] ?? {};
+    final gate = slot['gate']?['name']?.toString() ?? 'Gate';
+    final startTime = _formatTime(slot['start_time']);
+    final endTime = _formatTime(slot['end_time']);
+    final timeWindow = '$startTime - $endTime';
+    final bookingDate = _formatDate(slot['start_time']);
 
-  final slot = booking['slot_detail'] ?? {};
-  final gate = slot['gate']?['name']?.toString() ?? 'Gate';
-  final startTime = _formatTime(slot['start_time']);
-  final endTime = _formatTime(slot['end_time']);
-  final timeWindow = '$startTime - $endTime';
-  final bookingDate = _formatDate(slot['start_time']);
+    Color statusColor;
+    String statusText;
+    switch (status) {
+      case 'approved':
+        statusColor = const Color(0xFF1B8F3A);
+        statusText = 'VERIFIED';
+        break;
+      case 'pending':
+        statusColor = const Color(0xFFF39C12);
+        statusText = 'PENDING';
+        break;
+      case 'arrived':
+        statusColor = const Color(0xFF2F6FD6);
+        statusText = 'ARRIVED';
+        break;
+      default:
+        statusColor = const Color(0xFF8E96A8);
+        statusText = status.toUpperCase();
+    }
 
-  Color statusColor;
-  String statusText;
-
-  switch (status) {
-    case 'approved':
-      statusColor = const Color(0xFF1B8F3A);
-      statusText = 'VERIFIED';
-      break;
-    case 'pending':
-      statusColor = const Color(0xFFF39C12);
-      statusText = 'PENDING';
-      break;
-    case 'arrived':
-      statusColor = const Color(0xFF2F6FD6);
-      statusText = 'ARRIVED';
-      break;
-    default:
-      statusColor = const Color(0xFF8E96A8);
-      statusText = status.toUpperCase();
+    return _ticketCard(
+      context: context,
+      gate: gate,
+      containerNo: containerNo,
+      timeWindow: timeWindow,
+      bookingDate: bookingDate,
+      bookingRef: bookingRef,
+      statusText: statusText,
+      statusColor: statusColor,
+      buttonText: status == 'approved' ? 'View Pass' : 'View Details',
+      buttonColor: status == 'approved'
+          ? const Color(0xFF2F6FD6)
+          : const Color(0xFFF39C12),
+      booking: booking,
+      onCancel: () => _cancelBooking(booking['id']),
+    );
   }
-
-  return _ticketCard(
-    context: context,
-    gate: gate,
-    containerNo: containerNo,
-    timeWindow: timeWindow,
-    bookingDate: bookingDate,
-    bookingRef: bookingRef,
-    statusText: statusText,
-    statusColor: statusColor,
-    buttonText: status == 'approved' ? 'View Pass' : 'View Details',
-    buttonColor: status == 'approved'
-        ? const Color(0xFF2F6FD6)
-        : const Color(0xFFF39C12),
-    booking: booking,
-  );
 }
 
 Widget _pastTicketCardFromApi(Map<String, dynamic> booking) {
@@ -357,7 +402,12 @@ Widget _ticketCard({
   required String buttonText,
   required Color buttonColor,
   required String bookingDate,
+  VoidCallback? onCancel,
 }) {
+  final status = (booking['status'] ?? '').toString().toLowerCase();
+  final showCancel =
+      status == 'pending'; // only pending bookings can be cancelled
+
   return Container(
     width: double.infinity,
     padding: const EdgeInsets.all(16),
@@ -368,137 +418,154 @@ Widget _ticketCard({
         BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
       ],
     ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    child: Stack(
       children: [
-        Text(
-          gate,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF0A2342),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Container No: $containerNo',
-          style: const TextStyle(fontSize: 15, color: Colors.black54),
-        ),
-        const SizedBox(height: 12),
-        const Divider(height: 1),
-        const SizedBox(height: 12),
-        Row(
+        // Main card content (unchanged)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 95,
-              height: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF1FB),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.local_shipping_outlined,
-                  color: buttonColor,
-                  size: 36,
-                ),
+            Text(
+              gate,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0A2342),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Time Window: $timeWindow',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0A2342),
+            const SizedBox(height: 6),
+            Text(
+              'Container No: $containerNo',
+              style: const TextStyle(fontSize: 15, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  width: 95,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF1FB),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.local_shipping_outlined,
+                      color: buttonColor,
+                      size: 36,
                     ),
                   ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    'Date: $bookingDate',
-                    style: const TextStyle(fontSize: 14, color: Colors.black54),
-                  ),
-
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Text(
-                      statusText,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Time Window: $timeWindow',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0A2342),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Date: $bookingDate',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                onPressed: () {
+                  if (status == 'approved') {
+                    final slot = booking['slot_detail'] ?? {};
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => GatePassScreen(
+                          qrToken: booking['qr_token']?.toString() ?? '',
+                          gateName: slot['gate']?['name']?.toString() ?? '',
+                          scanText: 'Scan at Entrance',
+                          status: booking['status']?.toString() ?? '',
+                          containerNumber:
+                              booking['container_number']?.toString() ?? '',
+                          timeWindow:
+                              '${_formatTime(slot['start_time'])} - ${_formatTime(slot['end_time'])}',
+                          bookingRef: 'BK-${booking['id']}',
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookingDetailsPage(booking: booking),
+                      ),
+                    );
+                  }
+                },
+                child: Text(
+                  buttonText,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        SizedBox(
-          width: double.infinity,
-          height: 46,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () {
-              final status = (booking['status'] ?? '').toString().toLowerCase();
 
-              if (status == 'approved') {
-                final slot = booking['slot_detail'] ?? {};
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GatePassScreen(
-                      qrToken: booking['qr_token']?.toString() ?? '',
-                      gateName: slot['gate']?['name']?.toString() ?? '',
-                      scanText: 'Scan at Entrance',
-                      status: booking['status']?.toString() ?? '',
-                      containerNumber:
-                          booking['container_number']?.toString() ?? '',
-                      timeWindow:
-                          '${_formatTime(slot['start_time'])} - ${_formatTime(slot['end_time'])}',
-                      bookingRef: 'BK-${booking['id']}',
-                    ),
-                  ),
-                );
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BookingDetailsPage(booking: booking),
-                  ),
-                );
-              }
-            },
-            child: Text(
-              buttonText,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        // Cancel button (top‑right)
+        if (showCancel)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.redAccent),
+              tooltip: 'Cancel Booking',
+              onPressed: onCancel,
             ),
           ),
-        ),
       ],
     ),
   );
