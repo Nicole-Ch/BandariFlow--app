@@ -74,52 +74,23 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0A2342), Color(0xFF163E77)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Previous Scans',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          'Gate scan history and validation logs',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _loading ? null : _fetchLogs,
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(child: _buildBody()),
-          ],
+      appBar: AppBar(
+        title: const Text('Scan History'),
+        backgroundColor: const Color(0xFF0A2342),
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loading ? null : _fetchLogs,
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(children: [Expanded(child: _buildBody())]),
       ),
     );
   }

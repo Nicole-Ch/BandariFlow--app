@@ -1,4 +1,5 @@
 import 'package:bandariflow/views/admin/widgets/admin_bottom_nav.dart';
+import 'package:bandariflow/views/gate/scan_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:bandariflow/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -234,7 +235,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   const SizedBox(height: 25),
 
-                  //YARD UTILIZATION
+                  _buildScanLogsCard(),
+
+                  const SizedBox(height: 25),
+
                   const Text(
                     "Current Yard Utilization",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -381,6 +385,84 @@ class _AdminDashboardState extends State<AdminDashboard> {
           const SizedBox(height: 4),
           Text(title),
         ],
+      ),
+    );
+  }
+
+  Widget _buildScanLogsCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ScanHistoryPage()),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A2342).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.history,
+                  size: 28,
+                  color: Color(0xFF0A2342),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'View Scan Logs',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0A2342),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Complete gate scan history and validation logs',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A2342),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Text(
+                  'VIEW LOGS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
