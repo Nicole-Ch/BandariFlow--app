@@ -20,6 +20,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool agreeTerms = false;
 
   Future<void> registerUser() async {
+    // Validate before making API call
+    if (fullNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your full name'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (emailController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email address'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (!emailController.text.trim().contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please enter a valid email address (e.g., name@example.com)',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (passwordController.text.trim().length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 6 characters long'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (passwordController.text.trim() !=
+        confirmPasswordController.text.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Passwords do not match'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     try {
       final result = await ApiService.register(
         fullName: fullNameController.text.trim(),
@@ -28,9 +82,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         confirmPassword: confirmPasswordController.text.trim(),
       );
 
-      print('REGISTER SUCCESS: $result');
-
       if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please login.'),
+          backgroundColor: Colors.green,
+        ),
+      );
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => LoginScreen()),
@@ -38,18 +97,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } catch (e) {
       print('REGISTER ERROR: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+
+      String errorMessage = 'Registration failed. Please try again.';
+
+      // Parse the error response from Django
+      final errorString = e.toString();
+
+      if (errorString.contains('email')) {
+        if (errorString.contains('valid email')) {
+          errorMessage =
+              'Please enter a valid email address (e.g., name@example.com)';
+        } else if (errorString.contains('already exists')) {
+          errorMessage =
+              'This email is already registered. Please login instead.';
+        }
+      } else if (errorString.contains('password')) {
+        if (errorString.contains('at least 6 characters')) {
+          errorMessage = 'Password must be at least 6 characters long.';
+        }
+      } else if (errorString.contains('confirm_password')) {
+        errorMessage = 'Passwords do not match. Please try again.';
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Container(
         width: double.infinity,
-
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -72,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
-                    border: Border.all(color: Color(0x0ffeaf3f), width: 2),
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: Image.asset(
                     'assets/images/logo.png',
@@ -80,7 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     height: 86,
                     fit: BoxFit.contain,
                     color: Colors.black,
-                    colorBlendMode: BlendMode.srcIn,
+                    colorBlendMode: BlendMode.srcATop,
                   ),
                 ),
                 SizedBox(height: 10),

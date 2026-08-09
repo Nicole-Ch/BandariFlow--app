@@ -130,7 +130,34 @@ class ApiService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Register failed: ${response.body}');
+      // Parse the error response for user-friendly messages
+      final errorData = jsonDecode(response.body);
+      String errorMessage = 'Registration failed.';
+
+      if (errorData is Map) {
+        final errors = errorData;
+        if (errors.containsKey('email')) {
+          final emailErrors = errors['email'] as List;
+          if (emailErrors.any((e) => e.contains('valid'))) {
+            errorMessage = 'Please enter a valid email address.';
+          } else if (emailErrors.any((e) => e.contains('exists'))) {
+            errorMessage = 'This email is already registered. Please login.';
+          } else {
+            errorMessage = emailErrors.join(', ');
+          }
+        } else if (errors.containsKey('password')) {
+          final passwordErrors = errors['password'] as List;
+          if (passwordErrors.any((e) => e.contains('6 characters'))) {
+            errorMessage = 'Password must be at least 6 characters.';
+          } else {
+            errorMessage = passwordErrors.join(', ');
+          }
+        } else if (errors.containsKey('confirm_password')) {
+          errorMessage = 'Passwords do not match.';
+        }
+      }
+
+      throw Exception(errorMessage);
     }
   }
 

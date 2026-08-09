@@ -2,7 +2,6 @@ import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/gate/driver_details.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:convert';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
