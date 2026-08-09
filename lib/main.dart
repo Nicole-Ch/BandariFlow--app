@@ -9,13 +9,21 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:bandariflow/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // ✅ ADD THIS IMPORT
 import 'views/auth/splash_screen.dart';
 
-// ✅ STEP 1: Add this global key right here at the top level
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ MOVE SystemChrome HERE (before runApp)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF0A2342),
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
 
   runApp(const BandariFlowApp());
 
@@ -49,7 +57,6 @@ class BandariFlowApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // ✅ STEP 2: Link the global key to your MaterialApp configuration
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'BandariFlow',
@@ -65,7 +72,6 @@ class BandariFlowApp extends StatelessWidget {
         '/gatepass': (context) => const MyTicketsPage(),
         '/profile': (context) => const ProfilePage(),
         '/adminDashboard': (context) => const AdminDashboard(),
-
         '/GateStaffMainScreen': (context) => const GateStaffMainScreen(),
       },
     );

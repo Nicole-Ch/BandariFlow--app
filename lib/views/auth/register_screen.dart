@@ -23,9 +23,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // Validate before making API call
     if (fullNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Please enter your full name'),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.grey.shade800,
         ),
       );
       return;
@@ -33,9 +33,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Please enter your email address'),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.grey.shade800,
         ),
       );
       return;
@@ -43,11 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!emailController.text.trim().contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'Please enter a valid email address (e.g., name@example.com)',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.grey.shade800,
         ),
       );
       return;
@@ -55,9 +55,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (passwordController.text.trim().length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Password must be at least 6 characters long'),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.grey.shade800,
         ),
       );
       return;
@@ -66,9 +66,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (passwordController.text.trim() !=
         confirmPasswordController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Passwords do not match'),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.grey.shade800,
         ),
       );
       return;

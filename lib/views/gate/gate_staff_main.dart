@@ -12,10 +12,20 @@ class GateStaffMainScreen extends StatefulWidget {
 class _GateStaffMainScreenState extends State<GateStaffMainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [QrScannerPage(), ScanHistoryPage()];
+  void _switchToScanTab() {
+    setState(() {
+      _currentIndex = 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Move the list here - no more initialization error!
+    final List<Widget> _pages = [
+      QrScannerPage(onBackToScan: _switchToScanTab),
+      ScanHistoryPage(onBackToScan: _switchToScanTab),
+    ];
+
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: NavigationBar(

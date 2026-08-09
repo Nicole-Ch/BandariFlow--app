@@ -100,7 +100,9 @@ class _BookingsPageState extends State<BookingsPage> {
                             builder: (_) => BookingDetailPage(booking: booking),
                           ),
                         ).then((_) {
-                          loadBookings();
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            loadBookings();
+                          });
                         });
                       },
                     ),

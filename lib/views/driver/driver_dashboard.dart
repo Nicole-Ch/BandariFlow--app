@@ -109,20 +109,7 @@ class _DriverDashboardState extends State<DriverDashboard>
         _startCountdown(approvedBooking['slot_detail']?['start_time']);
       }
 
-      // Reconcile targeted gate capacity parameters
-      final gateId =
-          (approvedBooking ?? latestBooking)?['slot_detail']?['gate']?['id'];
-
-      if (gateId != null) {
-        await loadHeatmapData(gateId: gateId);
-      } else {
-        if (mounted) {
-          setState(() {
-            yardCapacities = [];
-            loadingHeatmap = false;
-          });
-        }
-      }
+      await loadHeatmapData();
 
       // Check for broadcast informational notes safely
       await checkForBroadcastAlerts();
@@ -483,7 +470,7 @@ class _DriverDashboardState extends State<DriverDashboard>
     final bookingRef = booking == null ? '--' : 'BK-${booking['id']}';
 
     return Scaffold(
-      backgroundColor: Color(0xFFF5F7FA),
+      backgroundColor: Color(0xFFF5F7FB),
 
       body: SafeArea(
         child: ListView(

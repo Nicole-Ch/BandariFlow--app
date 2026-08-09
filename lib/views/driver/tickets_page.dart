@@ -141,7 +141,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     final currentList = selectedTab == 0 ? activeBookings : pastBookings;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF5F7FB),
       bottomNavigationBar: const DriverBottomNav(currentIndex: 2),
       body: SafeArea(
         child: Column(

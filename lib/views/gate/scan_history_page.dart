@@ -3,7 +3,8 @@ import 'package:bandariflow/services/api_service.dart';
 import 'package:bandariflow/views/gate/driver_details.dart';
 
 class ScanHistoryPage extends StatefulWidget {
-  const ScanHistoryPage({super.key});
+  final VoidCallback? onBackToScan;
+  const ScanHistoryPage({super.key, this.onBackToScan});
 
   @override
   State<ScanHistoryPage> createState() => _ScanHistoryPageState();
@@ -80,7 +81,20 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (widget.onBackToScan != null) {
+              widget.onBackToScan!(); // Switch to Scan tab (gate staff)
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context); // Normal back (admin dashboard)
+            } else {
+              // Fallback: go to admin dashboard
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/adminDashboard',
+                (route) => false,
+              );
+            }
+          },
         ),
         actions: [
           IconButton(

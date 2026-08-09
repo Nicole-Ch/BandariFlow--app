@@ -6,7 +6,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class QrScannerPage extends StatefulWidget {
-  const QrScannerPage({super.key});
+  final VoidCallback onBackToScan;
+  const QrScannerPage({super.key, required this.onBackToScan});
 
   @override
   State<QrScannerPage> createState() => _QrScannerPageState();
@@ -82,6 +83,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
       print("========== STEP 1 ==========");
       print("QR Token: $token");
 
+      // (Optional) Get location if needed
+      // Position? position = await _getCurrentPosition();
       Position? position;
 
       print("========== STEP 2 ==========");
@@ -128,13 +131,29 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
       if (!mounted) return;
 
+      // The error message is already a plain string from scanGatePass
+      String errorMessage = e.toString();
+
+      // Remove "Exception: " prefix if present
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+
+      // Optionally, you can still check for known keywords to add context,
+      // but the message from the server is already clear.
+      // If you want to keep it as is, just use errorMessage.
+
       setState(() {
-        _statusText = "Scan failed";
+        _statusText = errorMessage;
         _statusColor = Colors.red;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
       );
     } finally {
       if (mounted) {

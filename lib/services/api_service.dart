@@ -479,8 +479,8 @@ class ApiService {
     if (response.statusCode == 200) {
       return data as Map<String, dynamic>;
     }
-
-    throw Exception(data['detail']?.toString() ?? 'Scan failed');
+    final errorMsg = data['reason'] ?? data['detail'] ?? 'Scan failed';
+    throw Exception(errorMsg);
   }
 
   static Future<void> sendBroadcastAlert({
