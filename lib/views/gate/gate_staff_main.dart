@@ -21,13 +21,13 @@ class _GateStaffMainScreenState extends State<GateStaffMainScreen> {
   @override
   Widget build(BuildContext context) {
     // ✅ Move the list here - no more initialization error!
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       QrScannerPage(onBackToScan: _switchToScanTab),
       ScanHistoryPage(onBackToScan: _switchToScanTab),
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {

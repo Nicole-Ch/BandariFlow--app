@@ -40,7 +40,9 @@ class DriverBottomNav extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
       selectedItemColor: const Color(0xFF0A2342),
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: Colors.black54,
+      backgroundColor: Colors.white,
+      elevation: 4,
       onTap: (index) => _goToPage(context, index),
       items: const [
         BottomNavigationBarItem(

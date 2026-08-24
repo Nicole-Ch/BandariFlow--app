@@ -18,7 +18,6 @@ String? selectedGate;
 List<String> selectedDrivers = [];
 
 class _AlertsPageState extends State<AlertsPage> {
-  @override
   Color priorityColor(String priority) {
     switch (priority) {
       case "High":
