@@ -419,7 +419,7 @@ class _DriverDashboardState extends State<DriverDashboard>
       return;
     }
 
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       final now = DateTime.now();
       final difference = targetTime!.difference(now);
 
@@ -470,7 +470,7 @@ class _DriverDashboardState extends State<DriverDashboard>
     final bookingRef = booking == null ? '--' : 'BK-${booking['id']}';
 
     return Scaffold(
-      backgroundColor: Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFE8EDF5),
 
       body: SafeArea(
         child: ListView(
